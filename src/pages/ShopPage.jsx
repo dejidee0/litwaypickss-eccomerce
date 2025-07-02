@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { Filter, Grid, List, ChevronDown } from 'lucide-react'
+import { Filter, Grid, List, ChevronDown, Search, X } from 'lucide-react'
 import ProductCard from '../components/products/ProductCard'
 import ProductCardSkeleton from '../components/products/ProductCardSkeleton'
-import { products, getProductsByCategory, searchProducts, categories } from '../data/products'
+import { products, getProductsByCategory, searchProducts, advancedSearch, categories } from '../data/products'
 
 export default function ShopPage() {
   const { category } = useParams()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get('search')
   
   const [filteredProducts, setFilteredProducts] = useState([])
@@ -17,27 +17,44 @@ export default function ShopPage() {
   const [priceRange, setPriceRange] = useState([0, 500])
   const [selectedBrands, setSelectedBrands] = useState([])
   const [showFilters, setShowFilters] = useState(false)
+  const [currentSearchQuery, setCurrentSearchQuery] = useState(searchQuery || '')
 
   useEffect(() => {
     setLoading(true)
     
     // Simulate loading delay
     setTimeout(() => {
-      let result = products
+      let result = []
       
       if (searchQuery) {
-        result = searchProducts(searchQuery)
+        // Use advanced search for better results
+        result = advancedSearch(searchQuery, {
+          category: category,
+          minPrice: priceRange[0],
+          maxPrice: priceRange[1],
+          brands: selectedBrands
+        })
       } else if (category) {
         result = getProductsByCategory(category)
+        
+        // Apply filters
+        result = result.filter(product => {
+          const price = product.salePrice || product.price
+          const inPriceRange = price >= priceRange[0] && price <= priceRange[1]
+          const inSelectedBrands = selectedBrands.length === 0 || selectedBrands.includes(product.brand)
+          return inPriceRange && inSelectedBrands
+        })
+      } else {
+        result = products
+        
+        // Apply filters
+        result = result.filter(product => {
+          const price = product.salePrice || product.price
+          const inPriceRange = price >= priceRange[0] && price <= priceRange[1]
+          const inSelectedBrands = selectedBrands.length === 0 || selectedBrands.includes(product.brand)
+          return inPriceRange && inSelectedBrands
+        })
       }
-      
-      // Apply filters
-      result = result.filter(product => {
-        const price = product.salePrice || product.price
-        const inPriceRange = price >= priceRange[0] && price <= priceRange[1]
-        const inSelectedBrands = selectedBrands.length === 0 || selectedBrands.includes(product.brand)
-        return inPriceRange && inSelectedBrands
-      })
       
       // Apply sorting
       switch (sortBy) {
@@ -48,27 +65,52 @@ export default function ShopPage() {
           result.sort((a, b) => (b.salePrice || b.price) - (a.salePrice || a.price))
           break
         case 'rating':
-          result.sort((a, b) => b.rating - a.rating)
+          result.sort((a, b) => (b.rating || 0) - (a.rating || 0))
           break
         case 'newest':
-          result.sort((a, b) => b.id - a.id)
+          result.sort((a, b) => parseInt(b.id) - parseInt(a.id))
+          break
+        case 'name':
+          result.sort((a, b) => a.name.localeCompare(b.name))
           break
         default:
-          // Featured first
-          result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
+          // Featured first, then by rating
+          result.sort((a, b) => {
+            if (a.featured && !b.featured) return -1
+            if (!a.featured && b.featured) return 1
+            return (b.rating || 0) - (a.rating || 0)
+          })
       }
       
       setFilteredProducts(result)
       setLoading(false)
-    }, 500)
+    }, 300)
   }, [category, searchQuery, sortBy, priceRange, selectedBrands])
 
-  const brands = [...new Set(products.map(p => p.brand))]
+  // Update current search query when URL search param changes
+  useEffect(() => {
+    setCurrentSearchQuery(searchQuery || '')
+  }, [searchQuery])
+
+  const brands = [...new Set(products.map(p => p.brand))].sort()
   
   const currentCategory = categories.find(c => c.slug === category)
   const pageTitle = searchQuery 
     ? `Search results for "${searchQuery}"` 
     : currentCategory?.name || 'All Products'
+
+  const clearFilters = () => {
+    setPriceRange([0, 500])
+    setSelectedBrands([])
+    setSortBy('featured')
+  }
+
+  const clearSearch = () => {
+    setCurrentSearchQuery('')
+    setSearchParams({})
+  }
+
+  const hasActiveFilters = priceRange[1] < 500 || selectedBrands.length > 0
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -76,9 +118,20 @@ export default function ShopPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{pageTitle}</h1>
-          <p className="text-gray-600">
-            {loading ? 'Loading...' : `${filteredProducts.length} products found`}
-          </p>
+          <div className="flex items-center space-x-4">
+            <p className="text-gray-600">
+              {loading ? 'Loading...' : `${filteredProducts.length} products found`}
+            </p>
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="flex items-center space-x-1 text-sm text-red-600 hover:text-red-700 transition-colors"
+              >
+                <X className="h-4 w-4" />
+                <span>Clear search</span>
+              </button>
+            )}
+          </div>
         </div>
         
         <div className="flex items-center space-x-4 mt-4 md:mt-0">
@@ -106,6 +159,7 @@ export default function ShopPage() {
           >
             <option value="featured">Featured</option>
             <option value="newest">Newest</option>
+            <option value="name">Name A-Z</option>
             <option value="price-low">Price: Low to High</option>
             <option value="price-high">Price: High to Low</option>
             <option value="rating">Highest Rated</option>
@@ -114,10 +168,15 @@ export default function ShopPage() {
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="btn btn-outline flex items-center space-x-2"
+            className={`btn flex items-center space-x-2 ${hasActiveFilters ? 'btn-primary' : 'btn-outline'}`}
           >
             <Filter className="h-4 w-4" />
             <span>Filters</span>
+            {hasActiveFilters && (
+              <span className="bg-white text-primary-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                {(priceRange[1] < 500 ? 1 : 0) + selectedBrands.length}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -125,24 +184,37 @@ export default function ShopPage() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Filters Sidebar */}
         <div className={`lg:w-64 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-          <div className="card p-6 space-y-6">
-            <h3 className="font-semibold text-gray-900">Filters</h3>
+          <div className="card p-6 space-y-6 sticky top-24">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900">Filters</h3>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-primary-600 hover:text-primary-700 transition-colors"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
             
             {/* Price Range */}
             <div>
               <h4 className="font-medium text-gray-900 mb-3">Price Range</h4>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <input
                   type="range"
                   min="0"
                   max="500"
                   value={priceRange[1]}
                   onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
-                  className="w-full"
+                  className="w-full accent-primary-600"
                 />
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>LRD 0</span>
                   <span>LRD {priceRange[1]}</span>
+                </div>
+                <div className="text-center text-sm font-medium text-primary-600">
+                  Up to LRD {priceRange[1]}
                 </div>
               </div>
             </div>
@@ -150,9 +222,9 @@ export default function ShopPage() {
             {/* Brands */}
             <div>
               <h4 className="font-medium text-gray-900 mb-3">Brands</h4>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-48 overflow-y-auto">
                 {brands.map(brand => (
-                  <label key={brand} className="flex items-center">
+                  <label key={brand} className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded">
                     <input
                       type="checkbox"
                       checked={selectedBrands.includes(brand)}
@@ -163,29 +235,71 @@ export default function ShopPage() {
                           setSelectedBrands(selectedBrands.filter(b => b !== brand))
                         }
                       }}
-                      className="mr-2"
+                      className="mr-2 accent-primary-600"
                     />
                     <span className="text-sm text-gray-700">{brand}</span>
                   </label>
                 ))}
               </div>
             </div>
-            
-            {/* Clear Filters */}
-            <button
-              onClick={() => {
-                setPriceRange([0, 500])
-                setSelectedBrands([])
-              }}
-              className="w-full btn btn-outline"
-            >
-              Clear Filters
-            </button>
+
+            {/* Categories (if not in category view) */}
+            {!category && (
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Categories</h4>
+                <div className="space-y-2">
+                  {categories.map(cat => (
+                    <a
+                      key={cat.slug}
+                      href={`/shop/${cat.slug}`}
+                      className="block text-sm text-gray-700 hover:text-primary-600 transition-colors p-1 hover:bg-gray-50 rounded"
+                    >
+                      {cat.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Products Grid */}
         <div className="flex-1">
+          {/* Active Filters Display */}
+          {(searchQuery || hasActiveFilters) && (
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Active filters:</span>
+              {searchQuery && (
+                <span className="inline-flex items-center space-x-1 bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm">
+                  <Search className="h-3 w-3" />
+                  <span>"{searchQuery}"</span>
+                  <button onClick={clearSearch} className="hover:text-primary-900">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              {priceRange[1] < 500 && (
+                <span className="inline-flex items-center space-x-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  <span>Up to LRD {priceRange[1]}</span>
+                  <button onClick={() => setPriceRange([0, 500])} className="hover:text-blue-900">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              {selectedBrands.map(brand => (
+                <span key={brand} className="inline-flex items-center space-x-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                  <span>{brand}</span>
+                  <button 
+                    onClick={() => setSelectedBrands(selectedBrands.filter(b => b !== brand))}
+                    className="hover:text-green-900"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
           {loading ? (
             <div className={`grid ${
               viewMode === 'grid' 
@@ -209,21 +323,27 @@ export default function ShopPage() {
           ) : (
             <div className="text-center py-12">
               <div className="text-gray-400 mb-4">
-                <Grid className="h-16 w-16 mx-auto" />
+                <Search className="h-16 w-16 mx-auto" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
               <p className="text-gray-600 mb-4">
-                Try adjusting your filters or search terms
+                {searchQuery 
+                  ? `No products match "${searchQuery}". Try different keywords or adjust your filters.`
+                  : 'Try adjusting your filters or search terms'
+                }
               </p>
-              <button
-                onClick={() => {
-                  setPriceRange([0, 500])
-                  setSelectedBrands([])
-                }}
-                className="btn btn-primary"
-              >
-                Clear Filters
-              </button>
+              <div className="space-x-4">
+                {searchQuery && (
+                  <button onClick={clearSearch} className="btn btn-primary">
+                    Clear Search
+                  </button>
+                )}
+                {hasActiveFilters && (
+                  <button onClick={clearFilters} className="btn btn-outline">
+                    Clear Filters
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>

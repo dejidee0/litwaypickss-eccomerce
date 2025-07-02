@@ -69,6 +69,8 @@ export const products = [
     brand: 'LitwayStyle',
     rating: 4.5,
     reviewCount: 23,
+    tags: ['cotton', 'casual', 'comfortable', 'organic', 'everyday', 'basic', 'shirt'],
+    keywords: 'mens t-shirt cotton casual comfortable organic everyday basic shirt tee',
   },
   {
     id: '2',
@@ -85,6 +87,8 @@ export const products = [
     brand: 'DenimCraft',
     rating: 4.3,
     reviewCount: 18,
+    tags: ['denim', 'jeans', 'classic', 'blue', 'stretch', 'comfortable', 'pants'],
+    keywords: 'mens jeans denim classic blue stretch comfortable pants trousers',
   },
   {
     id: '101',
@@ -101,6 +105,8 @@ export const products = [
     brand: 'Executive',
     rating: 4.6,
     reviewCount: 34,
+    tags: ['formal', 'business', 'office', 'professional', 'dress', 'shirt', 'slim fit'],
+    keywords: 'mens formal business office professional dress shirt slim fit work',
   },
   {
     id: '102',
@@ -116,6 +122,8 @@ export const products = [
     brand: 'CasualWear',
     rating: 4.2,
     reviewCount: 19,
+    tags: ['polo', 'casual', 'comfortable', 'cotton', 'collar', 'breathable'],
+    keywords: 'mens polo shirt casual comfortable cotton collar breathable',
   },
   {
     id: '103',
@@ -132,6 +140,8 @@ export const products = [
     brand: 'LeatherCraft',
     rating: 4.7,
     reviewCount: 42,
+    tags: ['leather', 'dress', 'shoes', 'formal', 'elegant', 'handcrafted', 'premium'],
+    keywords: 'mens leather dress shoes formal elegant handcrafted premium footwear',
   },
   {
     id: '104',
@@ -147,6 +157,8 @@ export const products = [
     brand: 'SportStyle',
     rating: 4.4,
     reviewCount: 28,
+    tags: ['sneakers', 'casual', 'comfortable', 'lightweight', 'cushioning', 'style'],
+    keywords: 'mens sneakers casual comfortable lightweight cushioning style footwear',
   },
   {
     id: '105',
@@ -163,6 +175,8 @@ export const products = [
     brand: 'WinterWear',
     rating: 4.8,
     reviewCount: 56,
+    tags: ['winter', 'jacket', 'warm', 'water-resistant', 'cold weather', 'stylish'],
+    keywords: 'mens winter jacket warm water-resistant cold weather stylish outerwear',
   },
 
   // Women's Fashion (30 products)
@@ -183,6 +197,8 @@ export const products = [
     brand: 'FashionFlow',
     rating: 4.7,
     reviewCount: 31,
+    tags: ['dress', 'summer', 'elegant', 'floral', 'lightweight', 'beautiful'],
+    keywords: 'womens summer dress elegant floral lightweight beautiful fashion',
   },
   {
     id: '4',
@@ -198,6 +214,8 @@ export const products = [
     brand: 'StyleEssentials',
     rating: 4.2,
     reviewCount: 15,
+    tags: ['blouse', 'casual', 'comfortable', 'stylish', 'versatile', 'work'],
+    keywords: 'womens blouse casual comfortable stylish versatile work shirt top',
   },
   {
     id: '201',
@@ -214,6 +232,8 @@ export const products = [
     brand: 'DenimQueen',
     rating: 4.5,
     reviewCount: 67,
+    tags: ['jeans', 'high-waisted', 'trendy', 'stretch', 'denim', 'blue wash'],
+    keywords: 'womens high-waisted jeans trendy stretch denim blue wash pants',
   },
   {
     id: '202',
@@ -230,6 +250,8 @@ export const products = [
     brand: 'Elegance',
     rating: 4.9,
     reviewCount: 23,
+    tags: ['silk', 'evening', 'gown', 'luxurious', 'elegant', 'special occasion'],
+    keywords: 'womens silk evening gown luxurious elegant special occasion dress',
   },
   {
     id: '203',
@@ -245,6 +267,8 @@ export const products = [
     brand: 'ComfortWear',
     rating: 4.3,
     reviewCount: 41,
+    tags: ['cardigan', 'cozy', 'soft', 'warm', 'layering', 'knit'],
+    keywords: 'womens cardigan cozy soft warm layering knit sweater',
   },
   {
     id: '204',
@@ -261,6 +285,8 @@ export const products = [
     brand: 'ActiveFit',
     rating: 4.6,
     reviewCount: 89,
+    tags: ['leggings', 'athletic', 'workout', 'moisture-wicking', 'compression', 'activewear'],
+    keywords: 'womens athletic leggings workout moisture-wicking compression activewear fitness',
   },
   {
     id: '205',
@@ -277,6 +303,8 @@ export const products = [
     brand: 'LuxuryBags',
     rating: 4.8,
     reviewCount: 34,
+    tags: ['handbag', 'designer', 'stylish', 'premium', 'elegant', 'accessories'],
+    keywords: 'womens designer handbag stylish premium elegant accessories bag purse',
   },
 
   // Electronics (20 products)
@@ -297,6 +325,8 @@ export const products = [
     brand: 'SoundTech',
     rating: 4.6,
     reviewCount: 42,
+    tags: ['headphones', 'wireless', 'bluetooth', 'noise cancellation', 'music', 'audio'],
+    keywords: 'wireless bluetooth headphones noise cancellation music audio sound quality',
   },
   {
     id: '6',
@@ -313,6 +343,8 @@ export const products = [
     brand: 'FitTrack',
     rating: 4.4,
     reviewCount: 28,
+    tags: ['smartwatch', 'fitness', 'tracker', 'heart rate', 'GPS', 'health'],
+    keywords: 'smart fitness watch tracker heart rate GPS health monitoring wearable',
   },
   {
     id: '301',
@@ -329,6 +361,8 @@ export const products = [
     brand: 'TechPro',
     rating: 4.7,
     reviewCount: 156,
+    tags: ['smartphone', 'phone', 'mobile', '128GB', 'dual camera', 'processor'],
+    keywords: 'smartphone phone mobile 128GB dual camera processor android ios',
   },
   {
     id: '302',
@@ -345,6 +379,8 @@ export const products = [
     brand: 'CompuTech',
     rating: 4.5,
     reviewCount: 78,
+    tags: ['laptop', 'computer', 'work', 'entertainment', 'processor', 'display'],
+    keywords: 'laptop computer work entertainment processor display notebook PC',
   },
   {
     id: '303',
@@ -361,6 +397,8 @@ export const products = [
     brand: 'AudioMax',
     rating: 4.3,
     reviewCount: 92,
+    tags: ['earbuds', 'wireless', 'compact', 'sports', 'commute', 'audio'],
+    keywords: 'wireless earbuds compact sports commute audio sound quality bluetooth',
   },
   {
     id: '304',
@@ -376,6 +414,8 @@ export const products = [
     brand: 'TabletPro',
     rating: 4.4,
     reviewCount: 45,
+    tags: ['tablet', 'versatile', 'work', 'entertainment', 'display', 'battery'],
+    keywords: 'tablet versatile work entertainment display battery touchscreen portable',
   },
   {
     id: '305',
@@ -392,6 +432,8 @@ export const products = [
     brand: 'SoundWave',
     rating: 4.2,
     reviewCount: 67,
+    tags: ['speaker', 'bluetooth', 'portable', 'waterproof', 'outdoor', 'sound'],
+    keywords: 'bluetooth speaker portable waterproof outdoor sound wireless audio',
   },
 
   // Accessories (18 products)
@@ -410,6 +452,8 @@ export const products = [
     brand: 'LeatherCraft',
     rating: 4.8,
     reviewCount: 56,
+    tags: ['wallet', 'leather', 'premium', 'cards', 'money', 'handcrafted'],
+    keywords: 'leather wallet premium cards money handcrafted accessories mens',
   },
   {
     id: '8',
@@ -425,6 +469,8 @@ export const products = [
     brand: 'VisionStyle',
     rating: 4.1,
     reviewCount: 19,
+    tags: ['sunglasses', 'UV protection', 'stylish', 'modern', 'outdoor', 'eyewear'],
+    keywords: 'sunglasses UV protection stylish modern outdoor eyewear fashion',
   },
   {
     id: '401',
@@ -441,6 +487,8 @@ export const products = [
     brand: 'TimeKeeper',
     rating: 4.6,
     reviewCount: 73,
+    tags: ['watch', 'wristwatch', 'elegant', 'leather', 'timeless', 'classic'],
+    keywords: 'wristwatch elegant leather timeless classic watch timepiece accessories',
   },
   {
     id: '402',
@@ -456,6 +504,8 @@ export const products = [
     brand: 'SilkStyle',
     rating: 4.4,
     reviewCount: 26,
+    tags: ['scarf', 'silk', 'luxurious', 'patterns', 'accessory', 'fashion'],
+    keywords: 'silk scarf luxurious patterns accessory fashion womens style',
   },
   {
     id: '403',
@@ -472,6 +522,8 @@ export const products = [
     brand: 'CapStyle',
     rating: 4.2,
     reviewCount: 34,
+    tags: ['cap', 'baseball', 'comfortable', 'adjustable', 'casual', 'sun protection'],
+    keywords: 'baseball cap comfortable adjustable casual sun protection hat headwear',
   },
   {
     id: '404',
@@ -487,6 +539,8 @@ export const products = [
     brand: 'BeltCraft',
     rating: 4.5,
     reviewCount: 48,
+    tags: ['belt', 'leather', 'quality', 'buckle', 'formal', 'casual'],
+    keywords: 'leather belt quality buckle formal casual accessories mens',
   },
 
   // Home & Garden (22 products)
@@ -504,6 +558,8 @@ export const products = [
     brand: 'GardenStyle',
     rating: 4.3,
     reviewCount: 12,
+    tags: ['plant pot', 'decorative', 'ceramic', 'indoor', 'elegant', 'home decor'],
+    keywords: 'plant pot decorative ceramic indoor elegant home decor garden',
   },
   {
     id: '501',
@@ -520,6 +576,8 @@ export const products = [
     brand: 'HomeComfort',
     rating: 4.5,
     reviewCount: 38,
+    tags: ['pillows', 'throw', 'decorative', 'sofa', 'bed', 'soft'],
+    keywords: 'throw pillows decorative sofa bed soft fabric patterns home comfort',
   },
   {
     id: '502',
@@ -535,6 +593,8 @@ export const products = [
     brand: 'LightCraft',
     rating: 4.4,
     reviewCount: 29,
+    tags: ['lamp', 'table', 'modern', 'adjustable', 'reading', 'lighting'],
+    keywords: 'table lamp modern adjustable reading lighting home decor',
   },
   {
     id: '503',
@@ -551,6 +611,8 @@ export const products = [
     brand: 'ArtDecor',
     rating: 4.6,
     reviewCount: 22,
+    tags: ['wall art', 'canvas', 'beautiful', 'living space', 'print', 'vibrant'],
+    keywords: 'wall art canvas beautiful living space print vibrant colors decor',
   },
   {
     id: '504',
@@ -566,6 +628,8 @@ export const products = [
     brand: 'KitchenPro',
     rating: 4.3,
     reviewCount: 45,
+    tags: ['kitchen', 'utensils', 'wooden', 'cooking', 'food preparation', 'tools'],
+    keywords: 'kitchen utensils wooden cooking food preparation tools kitchenware',
   },
   {
     id: '505',
@@ -582,6 +646,8 @@ export const products = [
     brand: 'GardenMaster',
     rating: 4.7,
     reviewCount: 31,
+    tags: ['garden', 'tools', 'planting', 'maintenance', 'durable', 'comfortable'],
+    keywords: 'garden tools planting maintenance durable comfortable gardening',
   },
 
   // Beauty & Personal Care (15 products)
@@ -600,6 +666,8 @@ export const products = [
     brand: 'SkinCare Plus',
     rating: 4.5,
     reviewCount: 33,
+    tags: ['face cream', 'moisturizing', 'hydrating', 'skin care', 'nourishing', 'daily'],
+    keywords: 'face cream moisturizing hydrating skin care nourishing daily beauty',
   },
   {
     id: '601',
@@ -616,6 +684,8 @@ export const products = [
     brand: 'GlowSkin',
     rating: 4.7,
     reviewCount: 67,
+    tags: ['serum', 'vitamin C', 'brightening', 'radiant', 'dark spots', 'skin texture'],
+    keywords: 'vitamin C serum brightening radiant dark spots skin texture beauty',
   },
   {
     id: '602',
@@ -631,6 +701,8 @@ export const products = [
     brand: 'BeautyTools',
     rating: 4.6,
     reviewCount: 89,
+    tags: ['makeup', 'brushes', 'professional', 'soft bristles', 'complete', 'applications'],
+    keywords: 'makeup brushes professional soft bristles complete applications beauty tools',
   },
   {
     id: '603',
@@ -646,6 +718,8 @@ export const products = [
     brand: 'NaturalCare',
     rating: 4.4,
     reviewCount: 52,
+    tags: ['shampoo', 'organic', 'natural', 'healthy hair', 'sulfate-free', 'nourishing'],
+    keywords: 'organic shampoo natural healthy hair sulfate-free nourishing beauty',
   },
   {
     id: '604',
@@ -662,6 +736,8 @@ export const products = [
     brand: 'FragranceHouse',
     rating: 4.8,
     reviewCount: 34,
+    tags: ['perfume', 'elegant', 'fragrance', 'floral', 'woody', 'long-lasting'],
+    keywords: 'perfume elegant fragrance floral woody long-lasting beauty scent',
   },
 
   // Sports & Outdoors (16 products)
@@ -679,6 +755,8 @@ export const products = [
     brand: 'FitLife',
     rating: 4.4,
     reviewCount: 21,
+    tags: ['yoga', 'mat', 'exercise', 'meditation', 'non-slip', 'comfort'],
+    keywords: 'yoga mat exercise meditation non-slip comfort durability fitness',
   },
   {
     id: '12',
@@ -696,6 +774,8 @@ export const products = [
     brand: 'RunFast',
     rating: 4.6,
     reviewCount: 47,
+    tags: ['running', 'shoes', 'comfortable', 'cushioning', 'support', 'workouts'],
+    keywords: 'running shoes comfortable cushioning support workouts fitness athletic',
   },
   {
     id: '701',
@@ -712,6 +792,8 @@ export const products = [
     brand: 'FitGear',
     rating: 4.5,
     reviewCount: 38,
+    tags: ['dumbbells', 'adjustable', 'home workouts', 'compact', 'weights', 'fitness'],
+    keywords: 'dumbbells adjustable home workouts compact weights fitness equipment',
   },
   {
     id: '702',
@@ -727,6 +809,8 @@ export const products = [
     brand: 'SportsPro',
     rating: 4.3,
     reviewCount: 29,
+    tags: ['basketball', 'official size', 'grip', 'outdoor', 'indoor', 'games'],
+    keywords: 'basketball official size grip outdoor indoor games sports ball',
   },
   {
     id: '703',
@@ -743,6 +827,8 @@ export const products = [
     brand: 'OutdoorGear',
     rating: 4.7,
     reviewCount: 45,
+    tags: ['camping', 'tent', 'waterproof', 'outdoor', 'adventures', 'durable'],
+    keywords: 'camping tent waterproof outdoor adventures durable setup hiking',
   },
   {
     id: '704',
@@ -758,6 +844,8 @@ export const products = [
     brand: 'TrailMaster',
     rating: 4.4,
     reviewCount: 33,
+    tags: ['hiking', 'backpack', 'durable', 'compartments', 'outdoor', 'activities'],
+    keywords: 'hiking backpack durable compartments outdoor activities trail adventure',
   },
 ]
 
@@ -774,12 +862,151 @@ export function getProductBySlug(slug) {
   return products.find(product => product.slug === slug)
 }
 
+// Enhanced search function with comprehensive matching
 export function searchProducts(query) {
-  if (!query) return products
-  const lowercaseQuery = query.toLowerCase()
-  return products.filter(product => 
-    product.name.toLowerCase().includes(lowercaseQuery) ||
-    product.description.toLowerCase().includes(lowercaseQuery) ||
-    product.brand.toLowerCase().includes(lowercaseQuery)
-  )
+  if (!query || query.trim() === '') return products
+  
+  const lowercaseQuery = query.toLowerCase().trim()
+  const queryWords = lowercaseQuery.split(' ').filter(word => word.length > 0)
+  
+  return products.filter(product => {
+    // Create searchable text from all product fields
+    const searchableText = [
+      product.name,
+      product.description,
+      product.brand,
+      product.category,
+      product.keywords || '',
+      ...(product.tags || [])
+    ].join(' ').toLowerCase()
+    
+    // Check if any query word matches
+    const hasWordMatch = queryWords.some(word => 
+      searchableText.includes(word)
+    )
+    
+    // Check for exact phrase match
+    const hasExactMatch = searchableText.includes(lowercaseQuery)
+    
+    // Check for partial matches in name and brand (more weight)
+    const hasNameMatch = product.name.toLowerCase().includes(lowercaseQuery)
+    const hasBrandMatch = product.brand.toLowerCase().includes(lowercaseQuery)
+    
+    // Check category match
+    const hasCategoryMatch = product.category.toLowerCase().includes(lowercaseQuery)
+    
+    return hasWordMatch || hasExactMatch || hasNameMatch || hasBrandMatch || hasCategoryMatch
+  }).sort((a, b) => {
+    // Sort by relevance - exact name matches first, then brand, then others
+    const aNameMatch = a.name.toLowerCase().includes(lowercaseQuery)
+    const bNameMatch = b.name.toLowerCase().includes(lowercaseQuery)
+    const aBrandMatch = a.brand.toLowerCase().includes(lowercaseQuery)
+    const bBrandMatch = b.brand.toLowerCase().includes(lowercaseQuery)
+    
+    if (aNameMatch && !bNameMatch) return -1
+    if (!aNameMatch && bNameMatch) return 1
+    if (aBrandMatch && !bBrandMatch) return -1
+    if (!aBrandMatch && bBrandMatch) return 1
+    
+    // If same relevance, sort by featured status, then rating
+    if (a.featured && !b.featured) return -1
+    if (!a.featured && b.featured) return 1
+    
+    return (b.rating || 0) - (a.rating || 0)
+  })
+}
+
+// Advanced search with filters
+export function advancedSearch(query, filters = {}) {
+  let results = query ? searchProducts(query) : products
+  
+  // Apply category filter
+  if (filters.category) {
+    results = results.filter(product => product.category === filters.category)
+  }
+  
+  // Apply price range filter
+  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+    results = results.filter(product => {
+      const price = product.salePrice || product.price
+      const minPrice = filters.minPrice || 0
+      const maxPrice = filters.maxPrice || Infinity
+      return price >= minPrice && price <= maxPrice
+    })
+  }
+  
+  // Apply brand filter
+  if (filters.brands && filters.brands.length > 0) {
+    results = results.filter(product => filters.brands.includes(product.brand))
+  }
+  
+  // Apply rating filter
+  if (filters.minRating) {
+    results = results.filter(product => (product.rating || 0) >= filters.minRating)
+  }
+  
+  // Apply stock filter
+  if (filters.inStock) {
+    results = results.filter(product => product.stock > 0)
+  }
+  
+  // Apply featured filter
+  if (filters.featured) {
+    results = results.filter(product => product.featured)
+  }
+  
+  return results
+}
+
+// Get search suggestions
+export function getSearchSuggestions(query, limit = 5) {
+  if (!query || query.trim() === '') return []
+  
+  const lowercaseQuery = query.toLowerCase().trim()
+  const suggestions = new Set()
+  
+  products.forEach(product => {
+    // Add product names that start with or contain the query
+    if (product.name.toLowerCase().includes(lowercaseQuery)) {
+      suggestions.add(product.name)
+    }
+    
+    // Add brand names
+    if (product.brand.toLowerCase().includes(lowercaseQuery)) {
+      suggestions.add(product.brand)
+    }
+    
+    // Add category names
+    const category = categories.find(c => c.slug === product.category)
+    if (category && category.name.toLowerCase().includes(lowercaseQuery)) {
+      suggestions.add(category.name)
+    }
+    
+    // Add relevant tags
+    if (product.tags) {
+      product.tags.forEach(tag => {
+        if (tag.toLowerCase().includes(lowercaseQuery)) {
+          suggestions.add(tag)
+        }
+      })
+    }
+  })
+  
+  return Array.from(suggestions).slice(0, limit)
+}
+
+// Get popular search terms
+export function getPopularSearchTerms() {
+  return [
+    'headphones',
+    'smartphone',
+    'dress',
+    'jeans',
+    'laptop',
+    'watch',
+    'shoes',
+    'bag',
+    'makeup',
+    'fitness'
+  ]
 }

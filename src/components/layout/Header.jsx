@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Search, ShoppingCart, Menu, X, User, Heart, MapPin, Settings, LogOut } from 'lucide-react'
 import { useCart } from '../../lib/cart-context'
 import { useAuth } from '../../lib/auth-context'
+import { getSearchSuggestions, getPopularSearchTerms } from '../../data/products'
 import LoginModal from '../auth/LoginModal'
 
 const categories = [
@@ -20,16 +21,54 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false)
+  const [searchSuggestions, setSearchSuggestions] = useState([])
   const { itemsCount, setIsOpen } = useCart()
   const { user, isAuthenticated, isAdmin, logout } = useAuth()
   const navigate = useNavigate()
+
+  // Get search suggestions when query changes
+  useEffect(() => {
+    if (searchQuery.trim().length > 1) {
+      const suggestions = getSearchSuggestions(searchQuery, 8)
+      setSearchSuggestions(suggestions)
+      setShowSearchSuggestions(true)
+    } else {
+      setSearchSuggestions([])
+      setShowSearchSuggestions(false)
+    }
+  }, [searchQuery])
 
   const handleSearch = (e) => {
     e.preventDefault()
     if (searchQuery.trim()) {
       navigate(`/shop?search=${encodeURIComponent(searchQuery)}`)
       setSearchQuery('')
+      setShowSearchSuggestions(false)
     }
+  }
+
+  const handleSuggestionClick = (suggestion) => {
+    setSearchQuery(suggestion)
+    navigate(`/shop?search=${encodeURIComponent(suggestion)}`)
+    setShowSearchSuggestions(false)
+  }
+
+  const handleSearchFocus = () => {
+    if (searchQuery.trim().length > 1) {
+      setShowSearchSuggestions(true)
+    } else {
+      // Show popular search terms when focused with empty query
+      setSearchSuggestions(getPopularSearchTerms())
+      setShowSearchSuggestions(true)
+    }
+  }
+
+  const handleSearchBlur = () => {
+    // Delay hiding suggestions to allow clicking on them
+    setTimeout(() => {
+      setShowSearchSuggestions(false)
+    }, 200)
   }
 
   const handleLogout = () => {
@@ -71,23 +110,50 @@ export default function Header() {
           </Link>
 
           {/* Search bar - Desktop */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <input
-                type="search"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="input pr-10"
-              />
-              <button
-                type="submit"
-                className="absolute right-1 top-1 h-8 w-8 flex items-center justify-center bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
-              >
-                <Search className="h-4 w-4" />
-              </button>
-            </div>
-          </form>
+          <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
+            <form onSubmit={handleSearch} className="w-full">
+              <div className="relative">
+                <input
+                  type="search"
+                  placeholder="Search products, brands, categories..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={handleSearchFocus}
+                  onBlur={handleSearchBlur}
+                  className="input pr-10 w-full"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-1 top-1 h-8 w-8 flex items-center justify-center bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+              </div>
+            </form>
+
+            {/* Search Suggestions Dropdown */}
+            {showSearchSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-50 max-h-80 overflow-y-auto">
+                <div className="p-2">
+                  {searchQuery.trim().length <= 1 && (
+                    <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Popular Searches
+                    </div>
+                  )}
+                  {searchSuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md transition-colors flex items-center space-x-2"
+                    >
+                      <Search className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-700">{suggestion}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Actions */}
           <div className="flex items-center gap-4">
@@ -179,23 +245,50 @@ export default function Header() {
         </div>
 
         {/* Mobile search */}
-        <form onSubmit={handleSearch} className="mt-4 md:hidden">
-          <div className="relative">
-            <input
-              type="search"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="input pr-10"
-            />
-            <button
-              type="submit"
-              className="absolute right-1 top-1 h-8 w-8 flex items-center justify-center bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-          </div>
-        </form>
+        <div className="mt-4 md:hidden relative">
+          <form onSubmit={handleSearch}>
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Search products, brands, categories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={handleSearchFocus}
+                onBlur={handleSearchBlur}
+                className="input pr-10 w-full"
+              />
+              <button
+                type="submit"
+                className="absolute right-1 top-1 h-8 w-8 flex items-center justify-center bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
+              >
+                <Search className="h-4 w-4" />
+              </button>
+            </div>
+          </form>
+
+          {/* Mobile Search Suggestions */}
+          {showSearchSuggestions && searchSuggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-50 max-h-60 overflow-y-auto">
+              <div className="p-2">
+                {searchQuery.trim().length <= 1 && (
+                  <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Popular Searches
+                  </div>
+                )}
+                {searchSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-md transition-colors flex items-center space-x-2"
+                  >
+                    <Search className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-700">{suggestion}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Navigation */}
