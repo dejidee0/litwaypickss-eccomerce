@@ -1,116 +1,158 @@
-import React, { useState, useEffect } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
-import { Filter, Grid, List, ChevronDown, Search, X } from 'lucide-react'
-import ProductCard from '../components/products/ProductCard'
-import ProductCardSkeleton from '../components/products/ProductCardSkeleton'
-import { products, getProductsByCategory, searchProducts, advancedSearch, categories } from '../data/products'
+import React, { useState, useEffect } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
+import { Filter, Grid, List, ChevronDown, Search, X } from "lucide-react";
+import ProductCard from "../components/products/ProductCard";
+import ProductCardSkeleton from "../components/products/ProductCardSkeleton";
+import { supabase } from "../lib/supabase";
 
 export default function ShopPage() {
-  const { category } = useParams()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const searchQuery = searchParams.get('search')
-  
-  const [filteredProducts, setFilteredProducts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState('grid')
-  const [sortBy, setSortBy] = useState('featured')
-  const [priceRange, setPriceRange] = useState([0, 500])
-  const [selectedBrands, setSelectedBrands] = useState([])
-  const [showFilters, setShowFilters] = useState(false)
-  const [currentSearchQuery, setCurrentSearchQuery] = useState(searchQuery || '')
+  const { category } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search");
 
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState("grid");
+  const [sortBy, setSortBy] = useState("featured");
+  const [priceRange, setPriceRange] = useState([0, 500]);
+  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [currentSearchQuery, setCurrentSearchQuery] = useState(
+    searchQuery || ""
+  );
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+
+  // Fetch initial data
   useEffect(() => {
-    setLoading(true)
-    
-    // Simulate loading delay
-    setTimeout(() => {
-      let result = []
-      
-      if (searchQuery) {
-        // Use advanced search for better results
-        result = advancedSearch(searchQuery, {
-          category: category,
-          minPrice: priceRange[0],
-          maxPrice: priceRange[1],
-          brands: selectedBrands
-        })
-      } else if (category) {
-        result = getProductsByCategory(category)
-        
-        // Apply filters
-        result = result.filter(product => {
-          const price = product.salePrice || product.price
-          const inPriceRange = price >= priceRange[0] && price <= priceRange[1]
-          const inSelectedBrands = selectedBrands.length === 0 || selectedBrands.includes(product.brand)
-          return inPriceRange && inSelectedBrands
-        })
-      } else {
-        result = products
-        
-        // Apply filters
-        result = result.filter(product => {
-          const price = product.salePrice || product.price
-          const inPriceRange = price >= priceRange[0] && price <= priceRange[1]
-          const inSelectedBrands = selectedBrands.length === 0 || selectedBrands.includes(product.brand)
-          return inPriceRange && inSelectedBrands
-        })
+    const fetchInitialData = async () => {
+      // Fetch categories
+      const { data: categoriesData } = await supabase
+        .from("categories")
+        .select("*");
+
+      if (categoriesData) setCategories(categoriesData);
+
+      // Fetch brands
+      const { data: brandsData } = await supabase
+        .from("products")
+        .select("brand")
+        .not("brand", "is", null);
+
+      if (brandsData) {
+        const uniqueBrands = [...new Set(brandsData.map((item) => item.brand))];
+        setBrands(uniqueBrands.sort());
       }
-      
-      // Apply sorting
-      switch (sortBy) {
-        case 'price-low':
-          result.sort((a, b) => (a.salePrice || a.price) - (b.salePrice || b.price))
-          break
-        case 'price-high':
-          result.sort((a, b) => (b.salePrice || b.price) - (a.salePrice || a.price))
-          break
-        case 'rating':
-          result.sort((a, b) => (b.rating || 0) - (a.rating || 0))
-          break
-        case 'newest':
-          result.sort((a, b) => parseInt(b.id) - parseInt(a.id))
-          break
-        case 'name':
-          result.sort((a, b) => a.name.localeCompare(b.name))
-          break
-        default:
-          // Featured first, then by rating
-          result.sort((a, b) => {
-            if (a.featured && !b.featured) return -1
-            if (!a.featured && b.featured) return 1
-            return (b.rating || 0) - (a.rating || 0)
-          })
+    };
+
+    fetchInitialData();
+  }, []);
+
+  // Fetch products based on filters
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+
+      try {
+        let query = supabase.from("products_with_categories").select("*");
+
+        // Apply search filter
+        if (searchQuery) {
+          const { data: searchData } = await supabase.rpc("search_products", {
+            search_term: searchQuery,
+          });
+          query = { data: searchData };
+        }
+        // Apply category filter
+        else if (category) {
+          const { data: categoryData } = await supabase.rpc(
+            "get_products_by_category",
+            { category_slug_param: category }
+          );
+          query = { data: categoryData };
+        }
+
+        // Wait for the query to complete
+        const { data } = await query;
+
+        if (data) {
+          // Apply additional filters
+          let result = data.filter((product) => {
+            const price = product.sale_price || product.price;
+            const inPriceRange =
+              price >= priceRange[0] && price <= priceRange[1];
+            const inSelectedBrands =
+              selectedBrands.length === 0 ||
+              selectedBrands.includes(product.brand);
+            return inPriceRange && inSelectedBrands;
+          });
+
+          // Apply sorting
+          switch (sortBy) {
+            case "price-low":
+              result.sort(
+                (a, b) => (a.sale_price || a.price) - (b.sale_price || b.price)
+              );
+              break;
+            case "price-high":
+              result.sort(
+                (a, b) => (b.sale_price || b.price) - (a.sale_price || a.price)
+              );
+              break;
+            case "rating":
+              result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+              break;
+            case "newest":
+              result.sort(
+                (a, b) => new Date(b.created_at) - new Date(a.created_at)
+              );
+              break;
+            case "name":
+              result.sort((a, b) => a.name.localeCompare(b.name));
+              break;
+            default:
+              // Featured first, then by rating
+              result.sort((a, b) => {
+                if (a.featured && !b.featured) return -1;
+                if (!a.featured && b.featured) return 1;
+                return (b.rating || 0) - (a.rating || 0);
+              });
+          }
+
+          setFilteredProducts(result);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
       }
-      
-      setFilteredProducts(result)
-      setLoading(false)
-    }, 300)
-  }, [category, searchQuery, sortBy, priceRange, selectedBrands])
+    };
+
+    fetchProducts();
+  }, [category, searchQuery, sortBy, priceRange, selectedBrands]);
 
   // Update current search query when URL search param changes
   useEffect(() => {
-    setCurrentSearchQuery(searchQuery || '')
-  }, [searchQuery])
+    setCurrentSearchQuery(searchQuery || "");
+  }, [searchQuery]);
 
-  const brands = [...new Set(products.map(p => p.brand))].sort()
-  
-  const currentCategory = categories.find(c => c.slug === category)
-  const pageTitle = searchQuery 
-    ? `Search results for "${searchQuery}"` 
-    : currentCategory?.name || 'All Products'
+  const currentCategory = categories.find((c) => c.slug === category);
+  const pageTitle = searchQuery
+    ? `Search results for "${searchQuery}"`
+    : currentCategory?.name || "All Products";
 
   const clearFilters = () => {
-    setPriceRange([0, 500])
-    setSelectedBrands([])
-    setSortBy('featured')
-  }
+    setPriceRange([0, 500]);
+    setSelectedBrands([]);
+    setSortBy("featured");
+  };
 
   const clearSearch = () => {
-    setCurrentSearchQuery('')
-    setSearchParams({})
-  }
+    setCurrentSearchQuery("");
+    setSearchParams({});
+  };
 
-  const hasActiveFilters = priceRange[1] < 500 || selectedBrands.length > 0
+  const hasActiveFilters = priceRange[1] < 500 || selectedBrands.length > 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -120,7 +162,9 @@ export default function ShopPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{pageTitle}</h1>
           <div className="flex items-center space-x-4">
             <p className="text-gray-600">
-              {loading ? 'Loading...' : `${filteredProducts.length} products found`}
+              {loading
+                ? "Loading..."
+                : `${filteredProducts.length} products found`}
             </p>
             {searchQuery && (
               <button
@@ -133,24 +177,32 @@ export default function ShopPage() {
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-4 mt-4 md:mt-0">
           {/* View Mode Toggle */}
           <div className="flex border rounded-lg">
             <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 ${viewMode === 'grid' ? 'bg-primary-600 text-white' : 'text-gray-600'}`}
+              onClick={() => setViewMode("grid")}
+              className={`p-2 ${
+                viewMode === "grid"
+                  ? "bg-primary-600 text-white"
+                  : "text-gray-600"
+              }`}
             >
               <Grid className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 ${viewMode === 'list' ? 'bg-primary-600 text-white' : 'text-gray-600'}`}
+              onClick={() => setViewMode("list")}
+              className={`p-2 ${
+                viewMode === "list"
+                  ? "bg-primary-600 text-white"
+                  : "text-gray-600"
+              }`}
             >
               <List className="h-4 w-4" />
             </button>
           </div>
-          
+
           {/* Sort Dropdown */}
           <select
             value={sortBy}
@@ -164,11 +216,13 @@ export default function ShopPage() {
             <option value="price-high">Price: High to Low</option>
             <option value="rating">Highest Rated</option>
           </select>
-          
+
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`btn flex items-center space-x-2 ${hasActiveFilters ? 'btn-primary' : 'btn-outline'}`}
+            className={`btn flex items-center space-x-2 ${
+              hasActiveFilters ? "btn-primary" : "btn-outline"
+            }`}
           >
             <Filter className="h-4 w-4" />
             <span>Filters</span>
@@ -183,7 +237,7 @@ export default function ShopPage() {
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Filters Sidebar */}
-        <div className={`lg:w-64 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+        <div className={`lg:w-64 ${showFilters ? "block" : "hidden lg:block"}`}>
           <div className="card p-6 space-y-6 sticky top-24">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">Filters</h3>
@@ -196,7 +250,7 @@ export default function ShopPage() {
                 </button>
               )}
             </div>
-            
+
             {/* Price Range */}
             <div>
               <h4 className="font-medium text-gray-900 mb-3">Price Range</h4>
@@ -218,21 +272,26 @@ export default function ShopPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Brands */}
             <div>
               <h4 className="font-medium text-gray-900 mb-3">Brands</h4>
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {brands.map(brand => (
-                  <label key={brand} className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded">
+                {brands.map((brand) => (
+                  <label
+                    key={brand}
+                    className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"
+                  >
                     <input
                       type="checkbox"
                       checked={selectedBrands.includes(brand)}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedBrands([...selectedBrands, brand])
+                          setSelectedBrands([...selectedBrands, brand]);
                         } else {
-                          setSelectedBrands(selectedBrands.filter(b => b !== brand))
+                          setSelectedBrands(
+                            selectedBrands.filter((b) => b !== brand)
+                          );
                         }
                       }}
                       className="mr-2 accent-primary-600"
@@ -248,7 +307,7 @@ export default function ShopPage() {
               <div>
                 <h4 className="font-medium text-gray-900 mb-3">Categories</h4>
                 <div className="space-y-2">
-                  {categories.map(cat => (
+                  {categories.map((cat) => (
                     <a
                       key={cat.slug}
                       href={`/shop/${cat.slug}`}
@@ -268,12 +327,17 @@ export default function ShopPage() {
           {/* Active Filters Display */}
           {(searchQuery || hasActiveFilters) && (
             <div className="mb-6 flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">Active filters:</span>
+              <span className="text-sm font-medium text-gray-700">
+                Active filters:
+              </span>
               {searchQuery && (
                 <span className="inline-flex items-center space-x-1 bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm">
                   <Search className="h-3 w-3" />
                   <span>"{searchQuery}"</span>
-                  <button onClick={clearSearch} className="hover:text-primary-900">
+                  <button
+                    onClick={clearSearch}
+                    className="hover:text-primary-900"
+                  >
                     <X className="h-3 w-3" />
                   </button>
                 </span>
@@ -281,16 +345,26 @@ export default function ShopPage() {
               {priceRange[1] < 500 && (
                 <span className="inline-flex items-center space-x-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
                   <span>Up to LRD {priceRange[1]}</span>
-                  <button onClick={() => setPriceRange([0, 500])} className="hover:text-blue-900">
+                  <button
+                    onClick={() => setPriceRange([0, 500])}
+                    className="hover:text-blue-900"
+                  >
                     <X className="h-3 w-3" />
                   </button>
                 </span>
               )}
-              {selectedBrands.map(brand => (
-                <span key={brand} className="inline-flex items-center space-x-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+              {selectedBrands.map((brand) => (
+                <span
+                  key={brand}
+                  className="inline-flex items-center space-x-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
+                >
                   <span>{brand}</span>
-                  <button 
-                    onClick={() => setSelectedBrands(selectedBrands.filter(b => b !== brand))}
+                  <button
+                    onClick={() =>
+                      setSelectedBrands(
+                        selectedBrands.filter((b) => b !== brand)
+                      )
+                    }
                     className="hover:text-green-900"
                   >
                     <X className="h-3 w-3" />
@@ -301,21 +375,25 @@ export default function ShopPage() {
           )}
 
           {loading ? (
-            <div className={`grid ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-                : 'grid-cols-1'
-            } gap-6`}>
+            <div
+              className={`grid ${
+                viewMode === "grid"
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  : "grid-cols-1"
+              } gap-6`}
+            >
               {Array.from({ length: 12 }).map((_, i) => (
                 <ProductCardSkeleton key={i} />
               ))}
             </div>
           ) : filteredProducts.length > 0 ? (
-            <div className={`grid ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-                : 'grid-cols-1'
-            } gap-6`}>
+            <div
+              className={`grid ${
+                viewMode === "grid"
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  : "grid-cols-1"
+              } gap-6`}
+            >
               {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -325,12 +403,13 @@ export default function ShopPage() {
               <div className="text-gray-400 mb-4">
                 <Search className="h-16 w-16 mx-auto" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No products found
+              </h3>
               <p className="text-gray-600 mb-4">
-                {searchQuery 
+                {searchQuery
                   ? `No products match "${searchQuery}". Try different keywords or adjust your filters.`
-                  : 'Try adjusting your filters or search terms'
-                }
+                  : "Try adjusting your filters or search terms"}
               </p>
               <div className="space-x-4">
                 {searchQuery && (
@@ -349,5 +428,5 @@ export default function ShopPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

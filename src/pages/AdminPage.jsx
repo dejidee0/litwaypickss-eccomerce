@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Plus,
   Edit,
@@ -10,20 +10,32 @@ import {
   ShoppingCart,
   TrendingUp,
 } from "lucide-react";
-import { products as initialProducts, categories } from "../data/products";
 import { formatCurrency } from "../lib/currency";
 import { toast } from "sonner";
 import ProductForm from "../components/Admin/ProductForm";
 import ProductList from "../components/Admin/ProductList";
 import AdminStats from "../components/Admin/AdminStats";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 
 export default function AdminPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  if (!user || user.role !== "admin") {
+    return (
+      <div className="p-10 text-center text-red-600 font-semibold">
+        Unauthorized Access
+      </div>
+    );
+  }
 
   const tabs = [
     { id: "dashboard", label: "Dashboard", icon: TrendingUp },
@@ -32,42 +44,202 @@ export default function AdminPage() {
     { id: "customers", label: "Customers", icon: Users },
   ];
 
-  const handleAddProduct = (productData) => {
-    const newProduct = {
-      ...productData,
-      id: (Math.max(...products.map((p) => parseInt(p.id))) + 1).toString(),
-      rating: 0,
-      reviewCount: 0,
-      featured: false,
+  // Fetch products and categories
+  useEffect(() => {
+    // In your AdminPage.jsx, modify the fetchData function:
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch categories
+        const { data: categoriesData } = await supabase
+          .from("categories")
+          .select("*");
+
+        if (categoriesData) setCategories(categoriesData);
+
+        // Fetch products with category names
+        const { data: productsData } = await supabase
+          .from("products_with_categories")
+          .select("*");
+
+        if (productsData) {
+          // Fetch images for all products
+          const { data: imagesData } = await supabase
+            .from("product_images")
+            .select("product_id, url");
+
+          // Map images to products
+          const productsWithImages = productsData.map((product) => ({
+            ...product,
+            images:
+              imagesData
+                ?.filter((img) => img.product_id === product.id)
+                ?.map((img) => img.url) || [],
+          }));
+
+          setProducts(productsWithImages);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Failed to load data");
+      } finally {
+        setLoading(false);
+      }
     };
-    setProducts([...products, newProduct]);
-    setShowProductForm(false);
-    toast.success("Product added successfully!");
-  };
 
-  const handleUpdateProduct = (productData) => {
-    setProducts(
-      products.map((p) =>
-        p.id === editingProduct.id
-          ? { ...productData, id: editingProduct.id }
-          : p
-      )
-    );
-    setEditingProduct(null);
-    setShowProductForm(false);
-    toast.success("Product updated successfully!");
-  };
+    fetchData();
+  }, []);
 
-  const handleDeleteProduct = (productId) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      setProducts(products.filter((p) => p.id !== productId));
-      toast.success("Product deleted successfully!");
+  const handleAddProduct = async (productData) => {
+    try {
+      // First insert the product
+      const { data: newProduct, error } = await supabase
+        .from("products")
+        .insert({
+          name: productData.name,
+          slug: productData.slug,
+          description: productData.description,
+          price: productData.price,
+          sale_price: productData.salePrice,
+          stock: productData.stock,
+          featured: productData.featured,
+          category_slug: productData.category,
+          brand: productData.brand,
+          rating: 0,
+          review_count: 0,
+          keywords: productData.keywords,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Then insert tags if they exist
+      if (productData.tags && productData.tags.length > 0) {
+        const tagInserts = productData.tags.map((tag) => ({
+          product_id: newProduct.id,
+          tag: tag,
+        }));
+
+        const { error: tagError } = await supabase
+          .from("product_tags")
+          .insert(tagInserts);
+
+        if (tagError) throw tagError;
+      }
+
+      // Refresh products
+      const { data: updatedProducts } = await supabase
+        .from("products_with_categories")
+        .select("*");
+
+      setProducts(updatedProducts);
+      setShowProductForm(false);
+      toast.success("Product added successfully!");
+    } catch (error) {
+      console.error("Error adding product:", error);
+      toast.error("Failed to add product");
     }
   };
 
-  const handleEditProduct = (product) => {
-    setEditingProduct(product);
-    setShowProductForm(true);
+  const handleUpdateProduct = async (productData) => {
+    try {
+      // Update product
+      const { error } = await supabase
+        .from("products")
+        .update({
+          name: productData.name,
+          slug: productData.slug,
+          description: productData.description,
+          price: productData.price,
+          sale_price: productData.salePrice,
+          stock: productData.stock,
+          featured: productData.featured,
+          category_slug: productData.category,
+          brand: productData.brand,
+          keywords: productData.keywords,
+        })
+        .eq("id", editingProduct.id);
+
+      if (error) throw error;
+
+      // For simplicity, we're not handling image/tag updates here
+      // In a real app, you'd want to update these as well
+
+      // Refresh products
+      const { data: updatedProducts } = await supabase
+        .from("products_with_categories")
+        .select("*");
+
+      setProducts(updatedProducts);
+      setEditingProduct(null);
+      setShowProductForm(false);
+      toast.success("Product updated successfully!");
+    } catch (error) {
+      console.error("Error updating product:", error);
+      toast.error("Failed to update product");
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        // First delete related images and tags
+        await supabase
+          .from("product_images")
+          .delete()
+          .eq("product_id", productId);
+
+        await supabase
+          .from("product_tags")
+          .delete()
+          .eq("product_id", productId);
+
+        // Then delete the product
+        const { error } = await supabase
+          .from("products")
+          .delete()
+          .eq("id", productId);
+
+        if (error) throw error;
+
+        // Refresh products
+        const { data: updatedProducts } = await supabase
+          .from("products_with_categories")
+          .select("*");
+
+        setProducts(updatedProducts);
+        toast.success("Product deleted successfully!");
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        toast.error("Failed to delete product");
+      }
+    }
+  };
+
+  const handleEditProduct = async (product) => {
+    try {
+      // Fetch product details including images and tags
+      const { data: productImages } = await supabase
+        .from("product_images")
+        .select("url")
+        .eq("product_id", product.id);
+
+      const { data: productTags } = await supabase
+        .from("product_tags")
+        .select("tag")
+        .eq("product_id", product.id);
+
+      setEditingProduct({
+        ...product,
+        images: productImages?.map((img) => img.url) || [],
+        tags: productTags?.map((t) => t.tag) || [],
+      });
+      setShowProductForm(true);
+    } catch (error) {
+      console.error("Error fetching product details:", error);
+      toast.error("Failed to load product details");
+    }
   };
 
   const filteredProducts = products.filter((product) => {
@@ -75,7 +247,7 @@ export default function AdminPage() {
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.brand.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory =
-      !selectedCategory || product.category === selectedCategory;
+      !selectedCategory || product.category_slug === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -138,28 +310,27 @@ export default function AdminPage() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
                       Recent Products
                     </h3>
-                    <div className="space-y-3">
-                      {products.slice(0, 5).map((product) => (
-                        <div
-                          key={product.id}
-                          className="flex items-center space-x-3"
-                        >
-                          <img
-                            src={product.images[0]}
-                            alt={product.name}
-                            className="w-12 h-12 object-cover rounded-lg"
-                          />
-                          <div className="flex-1">
-                            <h4 className="font-medium text-gray-900 text-sm">
-                              {product.name}
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              {formatCurrency(product.price)}
-                            </p>
+                    {loading ? (
+                      <p>Loading...</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {products.slice(0, 5).map((product) => (
+                          <div
+                            key={product.id}
+                            className="flex items-center space-x-3"
+                          >
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900 text-sm">
+                                {product.name}
+                              </h4>
+                              <p className="text-sm text-gray-600">
+                                {formatCurrency(product.price)}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Low Stock Alert */}
@@ -167,35 +338,39 @@ export default function AdminPage() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
                       Low Stock Alert
                     </h3>
-                    <div className="space-y-3">
-                      {products
-                        .filter((p) => p.stock <= 10)
-                        .slice(0, 5)
-                        .map((product) => (
-                          <div
-                            key={product.id}
-                            className="flex items-center justify-between"
-                          >
-                            <div>
-                              <h4 className="font-medium text-gray-900 text-sm">
-                                {product.name}
-                              </h4>
-                              <p className="text-sm text-gray-600">
-                                {product.category}
-                              </p>
-                            </div>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                product.stock === 0
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-orange-100 text-orange-800"
-                              }`}
+                    {loading ? (
+                      <p>Loading...</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {products
+                          .filter((p) => p.stock <= 10)
+                          .slice(0, 5)
+                          .map((product) => (
+                            <div
+                              key={product.id}
+                              className="flex items-center justify-between"
                             >
-                              {product.stock} left
-                            </span>
-                          </div>
-                        ))}
-                    </div>
+                              <div>
+                                <h4 className="font-medium text-gray-900 text-sm">
+                                  {product.name}
+                                </h4>
+                                <p className="text-sm text-gray-600">
+                                  {product.category_name}
+                                </p>
+                              </div>
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  product.stock === 0
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-orange-100 text-orange-800"
+                                }`}
+                              >
+                                {product.stock} left
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -211,7 +386,9 @@ export default function AdminPage() {
                       Products
                     </h2>
                     <p className="text-gray-600">
-                      {filteredProducts.length} products found
+                      {loading
+                        ? "Loading..."
+                        : `${filteredProducts.length} products found`}
                     </p>
                   </div>
                   <button
@@ -257,11 +434,17 @@ export default function AdminPage() {
                 </div>
 
                 {/* Products List */}
-                <ProductList
-                  products={filteredProducts}
-                  onEdit={handleEditProduct}
-                  onDelete={handleDeleteProduct}
-                />
+                {loading ? (
+                  <div className="card p-6">
+                    <p>Loading products...</p>
+                  </div>
+                ) : (
+                  <ProductList
+                    products={filteredProducts}
+                    onEdit={handleEditProduct}
+                    onDelete={handleDeleteProduct}
+                  />
+                )}
               </div>
             )}
 
@@ -294,6 +477,7 @@ export default function AdminPage() {
       {showProductForm && (
         <ProductForm
           product={editingProduct}
+          categories={categories}
           onSave={editingProduct ? handleUpdateProduct : handleAddProduct}
           onCancel={() => {
             setShowProductForm(false);

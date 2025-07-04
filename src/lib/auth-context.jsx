@@ -1,163 +1,165 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
-import { toast } from 'sonner'
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { toast } from "sonner";
+import { supabase } from "../lib/supabase"; // ensure this exports your initialized Supabase client
 
-const AuthContext = createContext()
-
-// Mock users database
-const MOCK_USERS = {
-  admin: {
-    id: 'admin-1',
-    email: 'admin@litwaypicks.com',
-    password: 'admin123',
-    role: 'admin',
-    firstName: 'Admin',
-    lastName: 'User',
-    phone: '+231-888-640-502',
-  },
-  customers: [
-    {
-      id: 'customer-1',
-      email: 'john.doe@example.com',
-      password: 'customer123',
-      role: 'customer',
-      firstName: 'John',
-      lastName: 'Doe',
-      phone: '+231-888-123-456',
-      address: '123 Main Street',
-      city: 'Monrovia',
-      county: 'Montserrado'
-    },
-    {
-      id: 'customer-2',
-      email: 'sarah.johnson@example.com',
-      password: 'customer123',
-      role: 'customer',
-      firstName: 'Sarah',
-      lastName: 'Johnson',
-      phone: '+231-888-654-321',
-      address: '456 Oak Avenue',
-      city: 'Paynesville',
-      county: 'Montserrado'
-    }
-  ]
-}
+const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem('litwaypicks-user')
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser))
-      } catch (error) {
-        console.error('Error loading user:', error)
-        localStorage.removeItem('litwaypicks-user')
+    const getSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+
+        setUser({ ...session.user, ...profile });
       }
-    }
-    setLoading(false)
-  }, [])
+      setLoading(false);
+    };
 
-  // Save user to localStorage whenever user changes
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('litwaypicks-user', JSON.stringify(user))
-    } else {
-      localStorage.removeItem('litwaypicks-user')
-    }
-  }, [user])
+    getSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          supabase
+            .from("users")
+            .select("*")
+            .eq("id", session.user.id)
+            .single()
+            .then(({ data }) => {
+              setUser({ ...session.user, ...data });
+            });
+        } else {
+          setUser(null);
+        }
+      }
+    );
+
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
 
   const login = async (email, password) => {
-    setLoading(true)
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    // Check admin credentials
-    if (email === MOCK_USERS.admin.email && password === MOCK_USERS.admin.password) {
-      const { password: _, ...adminUser } = MOCK_USERS.admin
-      setUser(adminUser)
-      setLoading(false)
-      toast.success('Welcome back, Admin!')
-      return { success: true, user: adminUser }
+    if (error) {
+      toast.error(error.message || "Login failed");
+      setLoading(false);
+      return { success: false, error };
     }
 
-    // Check customer credentials
-    const customer = MOCK_USERS.customers.find(
-      c => c.email === email && c.password === password
-    )
+    const {
+      data: { user: supaUser },
+    } = await supabase.auth.getUser();
 
-    if (customer) {
-      const { password: _, ...customerUser } = customer
-      setUser(customerUser)
-      setLoading(false)
-      toast.success(`Welcome back, ${customer.firstName}!`)
-      return { success: true, user: customerUser }
-    }
+    const { data: profile } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", supaUser.id)
+      .single();
 
-    setLoading(false)
-    toast.error('Invalid email or password')
-    return { success: false, error: 'Invalid credentials' }
-  }
+    const fullUser = { ...supaUser, ...profile };
+    setUser(fullUser);
+    toast.success("Signed in successfully!");
+    setLoading(false);
+    return { success: true, user: fullUser };
+  };
 
   const register = async (userData) => {
-    setLoading(true)
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    setLoading(true);
 
-    // Check if email already exists
-    const emailExists = MOCK_USERS.customers.some(c => c.email === userData.email) || 
-                       userData.email === MOCK_USERS.admin.email
+    const { email, password, ...metadata } = userData;
 
-    if (emailExists) {
-      setLoading(false)
-      toast.error('Email already exists')
-      return { success: false, error: 'Email already exists' }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: metadata,
+      },
+    });
+
+    if (error) {
+      toast.error(error.message || "Registration failed");
+      setLoading(false);
+      return { success: false, error };
     }
 
-    // Create new customer
-    const newCustomer = {
-      id: `customer-${Date.now()}`,
-      ...userData,
-      role: 'customer',
+    // Also create user profile in `users` table
+    const userId = data?.user?.id; // ✅ now defined
+    console.log("New user ID:", userId);
+    console.log("New user ID:", metadata);
+
+    try {
+      await supabase.from("users").insert({
+        id: userId,
+        first_name: metadata.firstName,
+        last_name: metadata.lastName,
+        email: metadata.email,
+        phone: metadata.phone,
+        address: metadata.address,
+        city: metadata.city,
+        country: metadata.country,
+        role: "customer", // or "customer"
+      });
+    } catch (error) {
+      console.error("Error inserting into users table:", error.message);
     }
 
-    // In a real app, this would be saved to the backend
-    MOCK_USERS.customers.push(newCustomer)
+    toast.success("Account created successfully! Welcome Onboard");
+    setLoading(false);
+    return { success: true, user: data?.user };
+  };
 
-    const { password: _, ...userWithoutPassword } = newCustomer
-    setUser(userWithoutPassword)
-    setLoading(false)
-    toast.success('Account created successfully!')
-    return { success: true, user: userWithoutPassword }
-  }
-
-  const logout = () => {
-    setUser(null)
-    toast.success('Logged out successfully')
-  }
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    toast.success("Logged out successfully");
+  };
 
   const updateProfile = async (updatedData) => {
-    if (!user) return { success: false, error: 'Not authenticated' }
+    if (!user) return { success: false, error: "Not authenticated" };
 
-    setLoading(true)
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500))
+    setLoading(true);
+    const { error } = await supabase
+      .from("users")
+      .update(updatedData)
+      .eq("id", user.id);
 
-    const updatedUser = { ...user, ...updatedData }
-    setUser(updatedUser)
-    setLoading(false)
-    toast.success('Profile updated successfully!')
-    return { success: true, user: updatedUser }
-  }
+    if (error) {
+      toast.error("Profile update failed");
+      setLoading(false);
+      return { success: false, error };
+    }
 
-  const isAdmin = user?.role === 'admin'
-  const isCustomer = user?.role === 'customer'
-  const isAuthenticated = !!user
+    const { data: updatedProfile } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    setUser({ ...user, ...updatedProfile });
+    toast.success("Profile updated successfully!");
+    setLoading(false);
+    return { success: true, user: { ...user, ...updatedProfile } };
+  };
+
+  const isAdmin = user?.role === "admin";
+  const isCustomer = user?.role === "customer";
+  const isAuthenticated = !!user;
 
   return (
     <AuthContext.Provider
@@ -175,13 +177,13 @@ export function AuthProvider({ children }) {
     >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
+  return context;
 }
