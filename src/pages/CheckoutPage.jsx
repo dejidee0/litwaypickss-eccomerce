@@ -39,10 +39,17 @@ export default function CheckoutPage() {
 
   const finalTotal = appliedDiscount ? total - appliedDiscount.discount : total;
   const pointsToEarn = Math.floor(finalTotal * 1); // 1 point per LRD
+  // At the point of sending to backend:
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    const rawPhone = formData.phone.replace(/\D/g, ""); // removes + and dashes
+    const formattedPhone = rawPhone.startsWith("231")
+      ? rawPhone
+      : `231${rawPhone.replace(/^0+/, "")}`;
+    console.log("Sending MoMo payment to:", formattedPhone);
 
     if (formData.paymentMethod === "momo") {
       try {
@@ -50,7 +57,7 @@ export default function CheckoutPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            phone: formData.phone.replace(/\D/g, ""),
+            phone: formattedPhone,
             amount: finalTotal,
             externalId: `ORDER-${Date.now()}`,
             payerMessage: "Checkout Payment",

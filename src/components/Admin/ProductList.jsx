@@ -16,6 +16,13 @@ export default function ProductList({ products, onEdit, onDelete }) {
                 Category
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Sizes
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Colors
+              </th>
+
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Price
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -51,11 +58,47 @@ export default function ProductList({ products, onEdit, onDelete }) {
                     </div>
                   </div>
                 </td>
+
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
                     {product.category_name}
                   </div>
                 </td>
+
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {product.sizes?.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {product.sizes.map((size, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 text-xs bg-gray-100 text-gray-800 rounded"
+                        >
+                          {size}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400">—</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {product.colors?.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {product.colors.map((color, idx) => (
+                        <div key={idx} className="flex items-center space-x-1">
+                          <span
+                            className="inline-block w-4 h-4 rounded-full border border-gray-300"
+                            style={{ backgroundColor: color.toLowerCase() }}
+                          ></span>
+                          <span className="text-xs text-gray-700">{color}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400">—</span>
+                  )}
+                </td>
+
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
                     {formatCurrency(product.price)}
@@ -66,6 +109,7 @@ export default function ProductList({ products, onEdit, onDelete }) {
                     )}
                   </div>
                 </td>
+
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -79,6 +123,7 @@ export default function ProductList({ products, onEdit, onDelete }) {
                     {product.stock} in stock
                   </span>
                 </td>
+
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
                     onClick={() => onEdit(product)}

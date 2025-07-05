@@ -111,9 +111,17 @@ export default function Header() {
       {/* Main Header */}
       <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         {/* Logo */}
-        <Link to="/" className="text-2xl font-bold text-primary-600">
-          LitwayPicks
-        </Link>
+        <div className="flex justify-between ">
+          <Link to="/" className="text-2xl font-bold text-primary-600">
+            LitwayPicks
+          </Link>
+          <Link
+            to="/contact"
+            className="text-gray-700 pt-2 flex md:hidden hover:text-primary-600"
+          >
+            Contact
+          </Link>
+        </div>
 
         {/* Search */}
         <div className="relative w-full max-w-lg mx-auto">
@@ -247,7 +255,7 @@ export default function Header() {
       </div>
 
       {/* Always-visible Nav Links */}
-      <nav className="border-t overflow-x-auto scrollbar-hide bg-white">
+      <nav className="border-t  overflow-x-auto scrollbar-hide bg-white">
         <div className="flex items-center space-x-6 px-4 py-3 text-sm font-medium whitespace-nowrap">
           <Link to="/" className="text-gray-700 hover:text-primary-600">
             Home
@@ -264,12 +272,6 @@ export default function Header() {
               {cat.name}
             </Link>
           ))}
-          <Link to="/about" className="text-gray-700 hover:text-primary-600">
-            About
-          </Link>
-          <Link to="/contact" className="text-gray-700 hover:text-primary-600">
-            Contact
-          </Link>
         </div>
       </nav>
 

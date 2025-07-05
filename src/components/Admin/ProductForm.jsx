@@ -10,6 +10,8 @@ export default function ProductForm({ product, onSave, onCancel }) {
     description: "",
     price: "",
     salePrice: "",
+    sizes: [], // multiple sizes
+
     stock: "",
     category: "",
     brand: "",
@@ -17,6 +19,9 @@ export default function ProductForm({ product, onSave, onCancel }) {
 
   // Separate state for uploaded images (confirmed) and temporary uploads (in progress)
   const [uploadedImages, setUploadedImages] = useState([]);
+  const CLOTHING_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+  const [colors, setColors] = useState([]);
+  const [colorInput, setColorInput] = useState("");
   const [tempImages, setTempImages] = useState([]);
   const [uploading, setUploading] = useState(false);
 
@@ -29,9 +34,15 @@ export default function ProductForm({ product, onSave, onCancel }) {
         salePrice: product.salePrice?.toString() || "",
         stock: product.stock?.toString() || "",
         category: product.category || "",
+        sizes: product?.sizes || [],
         brand: product.brand || "",
       });
+
+      // Prefill uploaded images
       setUploadedImages(product.images || []);
+
+      // ✅ Prefill colors input for editing
+      setColors(product.colors || []);
     }
   }, [product]);
 
@@ -121,7 +132,12 @@ export default function ProductForm({ product, onSave, onCancel }) {
       toast.error("At least one product image is required");
       return;
     }
+    if (colors.length === 0) {
+      toast.error("At least one color is required");
+      return;
+    }
 
+    // Slugify the product name
     const slug = formData.name
       .toLowerCase()
       .replace(/[^\w ]+/g, "")
@@ -134,6 +150,8 @@ export default function ProductForm({ product, onSave, onCancel }) {
       salePrice: formData.salePrice ? parseFloat(formData.salePrice) : null,
       stock: parseInt(formData.stock),
       images: uploadedImages,
+      sizes: formData.sizes,
+      colors: colors.map((c) => c.trim()),
     };
 
     onSave(productData);
@@ -233,6 +251,74 @@ export default function ProductForm({ product, onSave, onCancel }) {
                 </select>
               </div>
             </div>
+          </div>
+          {["Men's-fashion", "Women's-fashion"].includes(formData.category) && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Available Sizes
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CLOTHING_SIZES.map((size) => (
+                  <label key={size} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.sizes.includes(size)}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          sizes: e.target.checked
+                            ? [...prev.sizes, size]
+                            : prev.sizes.filter((s) => s !== size),
+                        }));
+                      }}
+                      className="form-checkbox"
+                    />
+                    <span>{size}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+            <label className="block mb-2 font-medium text-sm text-gray-700">
+              Available Colors
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {colors.map((color, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm"
+                >
+                  {color}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setColors(colors.filter((c, i) => i !== idx))
+                    }
+                    className="ml-2 text-red-500 hover:text-red-700"
+                  >
+                    &times;
+                  </button>
+                </span>
+              ))}
+            </div>
+            <input
+              type="text"
+              placeholder="Type a color and press Enter"
+              value={colorInput}
+              onChange={(e) => setColorInput(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === ",") && colorInput.trim()) {
+                  e.preventDefault();
+                  const newColor = colorInput.trim();
+                  if (!colors.includes(newColor)) {
+                    setColors([...colors, newColor]);
+                  }
+                  setColorInput("");
+                }
+              }}
+              className="input"
+            />
           </div>
 
           {/* Pricing & Inventory */}

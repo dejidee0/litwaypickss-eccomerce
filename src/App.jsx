@@ -19,6 +19,7 @@ import { CartProvider } from "./lib/cart-context";
 import { AuthProvider } from "./lib/auth-context";
 import { LoyaltyProvider } from "./lib/loyalty-context";
 import PaymentConfirmationPage from "./pages/PaymentConfirmationPage";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <CartProvider>
           <div className="min-h-screen flex flex-col">
             <Header />
+            <ScrollToTop /> {/* ✅ Correct placement here */}
             <main className="flex-1">
               <Routes>
                 <Route path="/" element={<HomePage />} />

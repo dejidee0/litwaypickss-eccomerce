@@ -104,10 +104,12 @@ export default function AdminPage() {
           stock: productData.stock,
           featured: productData.featured,
           category_slug: productData.category,
+          sizes: productData.sizes,
           brand: productData.brand,
           rating: 0,
           review_count: 0,
           keywords: productData.keywords,
+          colors: productData.colors,
         })
         .select()
         .single();
@@ -156,8 +158,10 @@ export default function AdminPage() {
           stock: productData.stock,
           featured: productData.featured,
           category_slug: productData.category,
+          sizes: productData.sizes,
           brand: productData.brand,
           keywords: productData.keywords,
+          colors: productData.colors,
         })
         .eq("id", editingProduct.id);
 

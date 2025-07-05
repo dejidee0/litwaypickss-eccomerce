@@ -16,6 +16,8 @@ export default function ShopPage() {
   const [sortBy, setSortBy] = useState("featured");
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [selectedBrands, setSelectedBrands] = useState([]);
+  const [selectedSizes, setSelectedSizes] = useState([]);
+  const [availableSizes, setAvailableSizes] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [currentSearchQuery, setCurrentSearchQuery] = useState(
     searchQuery || ""
@@ -23,17 +25,13 @@ export default function ShopPage() {
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
 
-  // Fetch initial data
   useEffect(() => {
     const fetchInitialData = async () => {
-      // Fetch categories
       const { data: categoriesData } = await supabase
         .from("categories")
         .select("*");
-
       if (categoriesData) setCategories(categoriesData);
 
-      // Fetch brands
       const { data: brandsData } = await supabase
         .from("products")
         .select("brand")
@@ -48,23 +46,19 @@ export default function ShopPage() {
     fetchInitialData();
   }, []);
 
-  // Fetch products based on filters
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
-
       try {
         let query = supabase.from("products_with_categories").select("*");
 
-        // Apply search filter
+        // Apply search or category logic
         if (searchQuery) {
           const { data: searchData } = await supabase.rpc("search_products", {
             search_term: searchQuery,
           });
           query = { data: searchData };
-        }
-        // Apply category filter
-        else if (category) {
+        } else if (category) {
           const { data: categoryData } = await supabase.rpc(
             "get_products_by_category",
             { category_slug_param: category }
@@ -72,11 +66,9 @@ export default function ShopPage() {
           query = { data: categoryData };
         }
 
-        // Wait for the query to complete
         const { data } = await query;
 
         if (data) {
-          // Apply additional filters
           let result = data.filter((product) => {
             const price = product.sale_price || product.price;
             const inPriceRange =
@@ -84,10 +76,14 @@ export default function ShopPage() {
             const inSelectedBrands =
               selectedBrands.length === 0 ||
               selectedBrands.includes(product.brand);
-            return inPriceRange && inSelectedBrands;
+            const inSelectedSizes =
+              selectedSizes.length === 0 ||
+              selectedSizes.some((size) => product.sizes?.includes(size));
+
+            return inPriceRange && inSelectedBrands && inSelectedSizes;
           });
 
-          // Apply sorting
+          // Apply sort logic (same as before)
           switch (sortBy) {
             case "price-low":
               result.sort(
@@ -111,7 +107,6 @@ export default function ShopPage() {
               result.sort((a, b) => a.name.localeCompare(b.name));
               break;
             default:
-              // Featured first, then by rating
               result.sort((a, b) => {
                 if (a.featured && !b.featured) return -1;
                 if (!a.featured && b.featured) return 1;
@@ -129,21 +124,23 @@ export default function ShopPage() {
     };
 
     fetchProducts();
-  }, [category, searchQuery, sortBy, priceRange, selectedBrands]);
+  }, [
+    category,
+    searchQuery,
+    sortBy,
+    priceRange,
+    selectedBrands,
+    selectedSizes,
+  ]);
 
-  // Update current search query when URL search param changes
   useEffect(() => {
     setCurrentSearchQuery(searchQuery || "");
   }, [searchQuery]);
 
-  const currentCategory = categories.find((c) => c.slug === category);
-  const pageTitle = searchQuery
-    ? `Search results for "${searchQuery}"`
-    : currentCategory?.name || "All Products";
-
   const clearFilters = () => {
     setPriceRange([0, 500]);
     setSelectedBrands([]);
+    setSelectedSizes([]);
     setSortBy("featured");
   };
 
@@ -152,7 +149,15 @@ export default function ShopPage() {
     setSearchParams({});
   };
 
-  const hasActiveFilters = priceRange[1] < 500 || selectedBrands.length > 0;
+  const hasActiveFilters =
+    priceRange[1] < 500 ||
+    selectedBrands.length > 0 ||
+    selectedSizes.length > 0;
+
+  const currentCategory = categories.find((c) => c.slug === category);
+  const pageTitle = searchQuery
+    ? `Search results for "${searchQuery}"`
+    : currentCategory?.name || "All Products";
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -179,7 +184,6 @@ export default function ShopPage() {
         </div>
 
         <div className="flex items-center space-x-4 mt-4 md:mt-0">
-          {/* View Mode Toggle */}
           <div className="flex border rounded-lg">
             <button
               onClick={() => setViewMode("grid")}
@@ -203,7 +207,6 @@ export default function ShopPage() {
             </button>
           </div>
 
-          {/* Sort Dropdown */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -217,7 +220,6 @@ export default function ShopPage() {
             <option value="rating">Highest Rated</option>
           </select>
 
-          {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`btn flex items-center space-x-2 ${
@@ -228,7 +230,9 @@ export default function ShopPage() {
             <span>Filters</span>
             {hasActiveFilters && (
               <span className="bg-white text-primary-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                {(priceRange[1] < 500 ? 1 : 0) + selectedBrands.length}
+                {(priceRange[1] < 500 ? 1 : 0) +
+                  selectedBrands.length +
+                  selectedSizes.length}
               </span>
             )}
           </button>
@@ -267,9 +271,6 @@ export default function ShopPage() {
                   <span>LRD 0</span>
                   <span>LRD {priceRange[1]}</span>
                 </div>
-                <div className="text-center text-sm font-medium text-primary-600">
-                  Up to LRD {priceRange[1]}
-                </div>
               </div>
             </div>
 
@@ -280,20 +281,18 @@ export default function ShopPage() {
                 {brands.map((brand) => (
                   <label
                     key={brand}
-                    className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"
+                    className="flex items-center p-1 hover:bg-gray-50 rounded"
                   >
                     <input
                       type="checkbox"
                       checked={selectedBrands.includes(brand)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedBrands([...selectedBrands, brand]);
-                        } else {
-                          setSelectedBrands(
-                            selectedBrands.filter((b) => b !== brand)
-                          );
-                        }
-                      }}
+                      onChange={(e) =>
+                        setSelectedBrands(
+                          e.target.checked
+                            ? [...selectedBrands, brand]
+                            : selectedBrands.filter((b) => b !== brand)
+                        )
+                      }
                       className="mr-2 accent-primary-600"
                     />
                     <span className="text-sm text-gray-700">{brand}</span>
@@ -302,7 +301,35 @@ export default function ShopPage() {
               </div>
             </div>
 
-            {/* Categories (if not in category view) */}
+            <div>
+              <h4 className="font-medium text-gray-900 mb-3">Sizes</h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {["XS", "S", "M", "L", "XL", "XXL"].map((size) => (
+                  <label
+                    key={size}
+                    className="flex items-center cursor-pointer hover:bg-gray-50 p-1 rounded"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSizes.includes(size)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedSizes([...selectedSizes, size]);
+                        } else {
+                          setSelectedSizes(
+                            selectedSizes.filter((s) => s !== size)
+                          );
+                        }
+                      }}
+                      className="mr-2 accent-primary-600"
+                    />
+                    <span className="text-sm text-gray-700">{size}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Categories */}
             {!category && (
               <div>
                 <h4 className="font-medium text-gray-900 mb-3">Categories</h4>
@@ -322,32 +349,30 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* Products Grid */}
+        {/* Product Grid */}
         <div className="flex-1">
-          {/* Active Filters Display */}
           {(searchQuery || hasActiveFilters) && (
             <div className="mb-6 flex flex-wrap items-center gap-2">
               <span className="text-sm font-medium text-gray-700">
                 Active filters:
               </span>
               {searchQuery && (
-                <span className="inline-flex items-center space-x-1 bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm">
-                  <Search className="h-3 w-3" />
-                  <span>"{searchQuery}"</span>
+                <span className="inline-flex items-center bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm">
+                  <Search className="h-3 w-3 mr-1" />"{searchQuery}"
                   <button
                     onClick={clearSearch}
-                    className="hover:text-primary-900"
+                    className="ml-2 hover:text-primary-900"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 </span>
               )}
               {priceRange[1] < 500 && (
-                <span className="inline-flex items-center space-x-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                  <span>Up to LRD {priceRange[1]}</span>
+                <span className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  Up to LRD {priceRange[1]}
                   <button
                     onClick={() => setPriceRange([0, 500])}
-                    className="hover:text-blue-900"
+                    className="ml-2 hover:text-blue-900"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -356,16 +381,32 @@ export default function ShopPage() {
               {selectedBrands.map((brand) => (
                 <span
                   key={brand}
-                  className="inline-flex items-center space-x-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
+                  className="inline-flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
                 >
-                  <span>{brand}</span>
+                  {brand}
                   <button
                     onClick={() =>
                       setSelectedBrands(
                         selectedBrands.filter((b) => b !== brand)
                       )
                     }
-                    className="hover:text-green-900"
+                    className="ml-2 hover:text-green-900"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              {selectedSizes.map((size) => (
+                <span
+                  key={size}
+                  className="inline-flex items-center space-x-1 bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm"
+                >
+                  <span>{size}</span>
+                  <button
+                    onClick={() =>
+                      setSelectedSizes(selectedSizes.filter((s) => s !== size))
+                    }
+                    className="hover:text-pink-900"
                   >
                     <X className="h-3 w-3" />
                   </button>
