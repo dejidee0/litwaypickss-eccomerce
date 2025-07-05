@@ -18,6 +18,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { CartProvider } from "./lib/cart-context";
 import { AuthProvider } from "./lib/auth-context";
 import { LoyaltyProvider } from "./lib/loyalty-context";
+import PaymentConfirmationPage from "./pages/PaymentConfirmationPage";
 
 function App() {
   return (
@@ -34,6 +35,10 @@ function App() {
                 <Route path="/product/:slug" element={<ProductPage />} />
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
+                <Route
+                  path="/confirmation"
+                  element={<PaymentConfirmationPage />}
+                />
                 <Route
                   path="/account"
                   element={
