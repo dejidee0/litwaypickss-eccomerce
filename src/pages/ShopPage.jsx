@@ -50,72 +50,93 @@ export default function ShopPage() {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        let query = supabase.from("products_with_categories").select("*");
+        let queryResult = [];
 
-        // Apply search or category logic
         if (searchQuery) {
           const { data: searchData } = await supabase.rpc("search_products", {
             search_term: searchQuery,
           });
-          query = { data: searchData };
+          queryResult = searchData || [];
         } else if (category) {
           const { data: categoryData } = await supabase.rpc(
             "get_products_by_category",
             { category_slug_param: category }
           );
-          query = { data: categoryData };
+          queryResult = categoryData || [];
+        } else {
+          const { data } = await supabase
+            .from("products_with_categories")
+            .select("*");
+          queryResult = data || [];
         }
 
-        const { data } = await query;
+        // Fetch images
+        const { data: imagesData } = await supabase
+          .from("product_images")
+          .select("product_id, url");
 
-        if (data) {
-          let result = data.filter((product) => {
-            const price = product.sale_price || product.price;
-            const inPriceRange =
-              price >= priceRange[0] && price <= priceRange[1];
-            const inSelectedBrands =
-              selectedBrands.length === 0 ||
-              selectedBrands.includes(product.brand);
-            const inSelectedSizes =
-              selectedSizes.length === 0 ||
-              selectedSizes.some((size) => product.sizes?.includes(size));
+        // Map images to each product
+        const productsWithImages = queryResult.map((product) => {
+          const productImagePaths =
+            imagesData
+              ?.filter((img) => img.product_id === product.id)
+              .map((img) => img.url) || [];
 
-            return inPriceRange && inSelectedBrands && inSelectedSizes;
-          });
+          const publicImageUrls = productImagePaths.map(
+            (path) =>
+              supabase.storage.from("product-images").getPublicUrl(path).data
+                .publicUrl
+          );
 
-          // Apply sort logic (same as before)
-          switch (sortBy) {
-            case "price-low":
-              result.sort(
-                (a, b) => (a.sale_price || a.price) - (b.sale_price || b.price)
-              );
-              break;
-            case "price-high":
-              result.sort(
-                (a, b) => (b.sale_price || b.price) - (a.sale_price || a.price)
-              );
-              break;
-            case "rating":
-              result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-              break;
-            case "newest":
-              result.sort(
-                (a, b) => new Date(b.created_at) - new Date(a.created_at)
-              );
-              break;
-            case "name":
-              result.sort((a, b) => a.name.localeCompare(b.name));
-              break;
-            default:
-              result.sort((a, b) => {
-                if (a.featured && !b.featured) return -1;
-                if (!a.featured && b.featured) return 1;
-                return (b.rating || 0) - (a.rating || 0);
-              });
-          }
+          return { ...product, images: publicImageUrls };
+        });
 
-          setFilteredProducts(result);
+        // Apply filters
+        let result = productsWithImages.filter((product) => {
+          const price = product.sale_price || product.price;
+          const inPriceRange = price >= priceRange[0] && price <= priceRange[1];
+          const inSelectedBrands =
+            selectedBrands.length === 0 ||
+            selectedBrands.includes(product.brand);
+          const inSelectedSizes =
+            selectedSizes.length === 0 ||
+            selectedSizes.some((size) => product.sizes?.includes(size));
+
+          return inPriceRange && inSelectedBrands && inSelectedSizes;
+        });
+
+        // Apply sorting
+        switch (sortBy) {
+          case "price-low":
+            result.sort(
+              (a, b) => (a.sale_price || a.price) - (b.sale_price || b.price)
+            );
+            break;
+          case "price-high":
+            result.sort(
+              (a, b) => (b.sale_price || b.price) - (a.sale_price || a.price)
+            );
+            break;
+          case "rating":
+            result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            break;
+          case "newest":
+            result.sort(
+              (a, b) => new Date(b.created_at) - new Date(a.created_at)
+            );
+            break;
+          case "name":
+            result.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+          default:
+            result.sort((a, b) => {
+              if (a.featured && !b.featured) return -1;
+              if (!a.featured && b.featured) return 1;
+              return (b.rating || 0) - (a.rating || 0);
+            });
         }
+
+        setFilteredProducts(result);
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {

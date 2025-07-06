@@ -92,7 +92,6 @@ export default function AdminPage() {
 
   const handleAddProduct = async (productData) => {
     try {
-      // First insert the product
       const { data: newProduct, error } = await supabase
         .from("products")
         .insert({
@@ -116,11 +115,25 @@ export default function AdminPage() {
 
       if (error) throw error;
 
-      // Then insert tags if they exist
-      if (productData.tags && productData.tags.length > 0) {
+      // Save paths to product_images
+      const imageInserts = productData.images.map((path) => ({
+        product_id: newProduct.id,
+        url: path, // stored as relative path like "products/xyz.jpg"
+      }));
+
+      if (imageInserts.length > 0) {
+        const { error: imageError } = await supabase
+          .from("product_images")
+          .insert(imageInserts);
+
+        if (imageError) throw imageError;
+      }
+
+      // Insert tags if present
+      if (productData.tags?.length > 0) {
         const tagInserts = productData.tags.map((tag) => ({
           product_id: newProduct.id,
-          tag: tag,
+          tag,
         }));
 
         const { error: tagError } = await supabase
@@ -130,7 +143,7 @@ export default function AdminPage() {
         if (tagError) throw tagError;
       }
 
-      // Refresh products
+      // Refresh list
       const { data: updatedProducts } = await supabase
         .from("products_with_categories")
         .select("*");
@@ -236,7 +249,13 @@ export default function AdminPage() {
 
       setEditingProduct({
         ...product,
-        images: productImages?.map((img) => img.url) || [],
+        images:
+          productImages?.map(
+            (img) =>
+              supabase.storage.from("product-images").getPublicUrl(img.url).data
+                .publicUrl
+          ) || [],
+
         tags: productTags?.map((t) => t.tag) || [],
       });
       setShowProductForm(true);

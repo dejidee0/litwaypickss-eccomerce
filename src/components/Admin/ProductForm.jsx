@@ -11,10 +11,10 @@ export default function ProductForm({ product, onSave, onCancel }) {
     price: "",
     salePrice: "",
     sizes: [], // multiple sizes
-
     stock: "",
     category: "",
     brand: "",
+    keywords: "",
   });
 
   // Separate state for uploaded images (confirmed) and temporary uploads (in progress)
@@ -36,6 +36,7 @@ export default function ProductForm({ product, onSave, onCancel }) {
         category: product.category || "",
         sizes: product?.sizes || [],
         brand: product.brand || "",
+        keywords: product.keywords || "",
       });
 
       // Prefill uploaded images
@@ -48,7 +49,13 @@ export default function ProductForm({ product, onSave, onCancel }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === "category") {
+        console.log("Category changed to:", value);
+      }
+      return updated;
+    });
   };
 
   const handleImageUpload = async (e) => {
@@ -58,12 +65,11 @@ export default function ProductForm({ product, onSave, onCancel }) {
     setUploading(true);
 
     try {
-      // Process files in parallel
       const uploadPromises = files.map(async (file) => {
         const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
         const filePath = `products/${fileName}`;
 
-        // Add to temp images with loading state
+        // Add to temp images for loading UI
         setTempImages((prev) => [
           ...prev,
           {
@@ -73,26 +79,19 @@ export default function ProductForm({ product, onSave, onCancel }) {
           },
         ]);
 
-        // Upload to storage
         const { error } = await supabase.storage
           .from("product-images")
           .upload(filePath, file);
 
         if (error) throw error;
 
-        // Get public URL
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("product-images").getPublicUrl(filePath);
-
-        return publicUrl;
+        return filePath; // ← store path like "products/abc.jpg"
       });
 
-      // Wait for all uploads to complete
-      const urls = await Promise.all(uploadPromises);
+      const uploadedPaths = await Promise.all(uploadPromises);
 
-      // Move from temp to uploaded
-      setUploadedImages((prev) => [...prev, ...urls]);
+      // Add to form state (paths only)
+      setUploadedImages((prev) => [...prev, ...uploadedPaths]);
       setTempImages([]);
       toast.success(`${files.length} image(s) uploaded successfully`);
     } catch (error) {
@@ -100,7 +99,7 @@ export default function ProductForm({ product, onSave, onCancel }) {
       toast.error(`Failed to upload images: ${error.message}`);
     } finally {
       setUploading(false);
-      e.target.value = ""; // Reset file input
+      e.target.value = "";
     }
   };
 
@@ -151,6 +150,7 @@ export default function ProductForm({ product, onSave, onCancel }) {
       stock: parseInt(formData.stock),
       images: uploadedImages,
       sizes: formData.sizes,
+      keywords: formData.keywords,
       colors: colors.map((c) => c.trim()),
     };
 
@@ -159,7 +159,11 @@ export default function ProductForm({ product, onSave, onCancel }) {
 
   // Combine uploaded and temp images for display
   const allImages = [
-    ...uploadedImages.map((url) => ({ url, status: "uploaded" })),
+    ...uploadedImages.map((path) => ({
+      url: supabase.storage.from("product-images").getPublicUrl(path).data
+        .publicUrl,
+      status: "uploaded",
+    })),
     ...tempImages,
   ];
 
@@ -252,7 +256,7 @@ export default function ProductForm({ product, onSave, onCancel }) {
               </div>
             </div>
           </div>
-          {["Men's-fashion", "Women's-fashion"].includes(formData.category) && (
+          {["mens", "womens"].includes(formData.category) && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Available Sizes
@@ -318,6 +322,19 @@ export default function ProductForm({ product, onSave, onCancel }) {
                 }
               }}
               className="input"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Keywords (comma-separated)
+            </label>
+            <input
+              type="text"
+              name="keywords"
+              value={formData.keywords}
+              onChange={handleInputChange}
+              className="input"
+              placeholder="e.g., trending,men's wear,cotton"
             />
           </div>
 

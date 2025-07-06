@@ -4,49 +4,49 @@ import { Heart, ShoppingCart, Eye, Star } from "lucide-react";
 import { formatCurrency } from "../../lib/currency";
 import { useCart } from "../../lib/cart-context";
 import { toast } from "sonner";
-import { supabase } from "../../lib/supabase"; // Make sure this is configured
+import { supabase } from "../../lib/supabase";
 
 export default function ProductCard({ product }) {
   const [isHovered, setIsHovered] = useState(false);
-  const [images, setImages] = useState([]);
+  const [imageUrls, setImageUrls] = useState([]);
   const [categoryName, setCategoryName] = useState("");
   const { addItem } = useCart();
 
-  // Fetch product images and category name
   useEffect(() => {
-    async function fetchAdditionalData() {
+    async function fetchData() {
       try {
-        // Fetch images
-        const { data: imagesData } = await supabase
-          .from("product_images")
-          .select("url")
-          .eq("product_id", product.id)
-          .order("created_at", { ascending: true });
+        if (Array.isArray(product.images)) {
+          const urls = product.images.map(
+            (path) =>
+              supabase.storage.from("product-images").getPublicUrl(path).data
+                .publicUrl
+          );
+          setImageUrls(urls);
+        }
 
-        if (imagesData) setImages(imagesData.map((img) => img.url));
-
-        // Fetch category name
-        if (product.category_slug) {
-          const { data: categoryData } = await supabase
+        // Optionally fetch category name from slug
+        if (product.category_slug && !product.category) {
+          const { data } = await supabase
             .from("categories")
             .select("name")
             .eq("slug", product.category_slug)
             .single();
-
-          if (categoryData) setCategoryName(categoryData.name);
+          if (data?.name) setCategoryName(data.name);
+        } else {
+          setCategoryName(product.category || product.category_slug || "");
         }
-      } catch (error) {
-        console.error("Error fetching product details:", error);
+      } catch (err) {
+        console.error("Image/category fetch error:", err);
       }
     }
 
-    fetchAdditionalData();
-  }, [product.id, product.category_slug]);
+    fetchData();
+  }, [product]);
 
   const primaryImage =
-    images[0] ||
+    imageUrls[0] ||
     "https://images.pexels.com/photos/5632396/pexels-photo-5632396.jpeg";
-  const hoverImage = images[1] || primaryImage;
+  const hoverImage = imageUrls[1] || primaryImage;
 
   const discountPercentage = product.sale_price
     ? Math.round(((product.price - product.sale_price) / product.price) * 100)
@@ -61,11 +61,10 @@ export default function ProductCard({ product }) {
       return;
     }
 
-    // Prepare product data for cart
     const cartProduct = {
       ...product,
-      images, // Include fetched images
-      category: categoryName, // Include fetched category name
+      images: imageUrls,
+      category: categoryName,
     };
 
     addItem(cartProduct);
@@ -80,7 +79,7 @@ export default function ProductCard({ product }) {
   const handleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    toast.info("Added to wishlist!");
+    toast.success("Added to wishlist!");
   };
 
   return (
@@ -97,28 +96,24 @@ export default function ProductCard({ product }) {
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
 
-          {/* Discount Badge */}
           {discountPercentage > 0 && (
-            <span className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+            <span className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
               -{discountPercentage}%
             </span>
           )}
 
-          {/* Stock Badge */}
           {(!product.stock || product.stock === 0) && (
             <span className="absolute top-3 right-3 bg-gray-600 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">
               Out of Stock
             </span>
           )}
 
-          {/* Featured Badge */}
           {product.featured && (
             <span className="absolute top-3 right-3 bg-gradient-to-r from-primary-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
               ⭐ FEATURED
             </span>
           )}
 
-          {/* Hover Actions */}
           <div
             className={`absolute inset-0 bg-black/30 flex items-center justify-center transition-all duration-500 ${
               isHovered ? "opacity-100" : "opacity-0"
@@ -139,8 +134,8 @@ export default function ProductCard({ product }) {
               </button>
               <button
                 onClick={handleAddToCart}
-                disabled={!product.stock || product.stock === 0}
-                className="rounded-full w-12 h-12 bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-all duration-300 transform hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                disabled={!product.stock}
+                className="rounded-full w-12 h-12 bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center transition-all duration-300 transform hover:scale-110 disabled:opacity-50 shadow-lg"
               >
                 <ShoppingCart className="h-5 w-5" />
               </button>
@@ -148,19 +143,15 @@ export default function ProductCard({ product }) {
           </div>
         </div>
 
-        {/* Product Info */}
         <div className="p-5 space-y-3">
-          {/* Category */}
           <p className="text-xs text-primary-600 uppercase tracking-wide font-semibold">
-            {categoryName || product.category_slug}
+            {categoryName}
           </p>
 
-          {/* Name */}
           <h3 className="font-semibold text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-primary-700 transition-colors">
             {product.name}
           </h3>
 
-          {/* Rating */}
           {product.review_count > 0 && product.rating && (
             <div className="flex items-center space-x-2">
               <div className="flex">
@@ -181,7 +172,6 @@ export default function ProductCard({ product }) {
             </div>
           )}
 
-          {/* Price */}
           <div className="flex items-center space-x-2">
             <span className="font-bold text-xl text-gray-900">
               {formatCurrency(product.sale_price || product.price)}
@@ -193,7 +183,6 @@ export default function ProductCard({ product }) {
             )}
           </div>
 
-          {/* Stock Status */}
           {product.stock > 0 && product.stock <= 5 && (
             <div className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-1">
               <p className="text-xs text-orange-700 font-medium">
