@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useCart } from "../../lib/cart-context";
 import { useAuth } from "../../lib/auth-context";
+import { motion } from "framer-motion";
 import { useLoyalty } from "../../lib/loyalty-context";
 import {
   getSearchSuggestions,
@@ -110,9 +111,30 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         {/* Mobile Top Row: Logo + Icons */}
         <div className="flex items-center justify-between md:hidden">
-          <Link to="/" className="text-2xl font-bold text-primary-600">
-            LitwayPicks
+          <Link
+            to="/"
+            className="flex flex-col items-start md:flex-row md:items-center gap-1 group"
+          >
+            <motion.div
+              initial={{ rotate: 0 }}
+              animate={{ rotate: [0, 15, -15, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              className="text-primary-600"
+            >
+              <ShoppingCart className="h-7 w-7 md:h-8 md:w-8" />
+            </motion.div>
+            <div className="flex flex-col md:flex-row md:items-center md:space-x-2">
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6 }}
+                className="text-2xl md:text-3xl font-extrabold text-primary-600 tracking-tight group-hover:tracking-wider transition-all"
+              >
+                LitwayPicks
+              </motion.span>
+            </div>
           </Link>
+
           <div className="flex items-center gap-4">
             <Link
               to="/contact"
@@ -151,9 +173,30 @@ export default function Header() {
 
         {/* Desktop Row */}
         <div className="hidden md:flex md:items-center md:justify-between w-full">
-          <Link to="/" className="text-2xl font-bold text-primary-600">
-            LitwayPicks
+          <Link
+            to="/"
+            className="flex flex-col items-start md:flex-row md:items-center gap-1 group"
+          >
+            <motion.div
+              initial={{ rotate: 0 }}
+              animate={{ rotate: [0, 15, -15, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              className="text-primary-600"
+            >
+              <ShoppingCart className="h-7 w-7 md:h-8 md:w-8" />
+            </motion.div>
+            <div className="flex flex-col  md:items-center md:space-x-2">
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6 }}
+                className="text-2xl md:text-3xl font-extrabold text-primary-600 tracking-tight group-hover:tracking-wider transition-all"
+              >
+                LitwayPicks
+              </motion.span>
+            </div>
           </Link>
+
           <div className="relative w-full max-w-lg mx-4">
             <form onSubmit={handleSearch}>
               <div className="relative">
@@ -347,10 +390,16 @@ export default function Header() {
               {cat.name}
             </Link>
           ))}
-          <Link to="/about" className="text-gray-700 hover:text-primary-600">
+          <Link
+            to="/about"
+            className="text-gray-700 hidden md:block hover:text-primary-600"
+          >
             About
           </Link>
-          <Link to="/contact" className="text-gray-700 hover:text-primary-600">
+          <Link
+            to="/contact"
+            className="text-gray-700 hidden md:block hover:text-primary-600"
+          >
             Contact
           </Link>
         </div>

@@ -9,7 +9,9 @@ import {
   MapPin,
   Code,
   ExternalLink,
+  ShoppingCart,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Footer() {
   return (
@@ -19,7 +21,33 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-primary-400">LitwayPicks</h3>
+            <Link
+              to="/"
+              className="flex flex-col font-bold items-start md:flex-row md:items-center gap-1 group"
+            >
+              <motion.div
+                initial={{ rotate: 0 }}
+                animate={{ rotate: [0, 15, -15, 0] }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 2,
+                  ease: "easeInOut",
+                }}
+                className="text-primary-600"
+              >
+                <ShoppingCart className="h-7 w-7 md:h-8 md:w-8" />
+              </motion.div>
+              <div className="flex flex-col md:flex-row md:items-center md:space-x-2">
+                <motion.span
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6 }}
+                  className="text-2xl md:text-3xl font-extrabold text-primary-600 tracking-tight group-hover:tracking-wider transition-all"
+                >
+                  LitwayPicks
+                </motion.span>
+              </div>
+            </Link>
             <p className="text-gray-300">
               Liberia's premier e-commerce platform offering quality products
               with free nationwide delivery.

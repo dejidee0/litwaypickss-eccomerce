@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Filter, Grid, List, ChevronDown, Search, X } from "lucide-react";
+import { Filter, Grid, List, Search, X } from "lucide-react";
 import ProductCard from "../components/products/ProductCard";
 import ProductCardSkeleton from "../components/products/ProductCardSkeleton";
 import { supabase } from "../lib/supabase";
+import { getPublicImageUrls } from "../lib/utils";
 
 export default function ShopPage() {
   const { category } = useParams();
@@ -17,7 +18,6 @@ export default function ShopPage() {
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
-  const [availableSizes, setAvailableSizes] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [currentSearchQuery, setCurrentSearchQuery] = useState(
     searchQuery || ""
@@ -60,7 +60,9 @@ export default function ShopPage() {
         } else if (category) {
           const { data: categoryData } = await supabase.rpc(
             "get_products_by_category",
-            { category_slug_param: category }
+            {
+              category_slug_param: category,
+            }
           );
           queryResult = categoryData || [];
         } else {
@@ -70,26 +72,13 @@ export default function ShopPage() {
           queryResult = data || [];
         }
 
-        // Fetch images
-        const { data: imagesData } = await supabase
-          .from("product_images")
-          .select("product_id, url");
-
-        // Map images to each product
-        const productsWithImages = queryResult.map((product) => {
-          const productImagePaths =
-            imagesData
-              ?.filter((img) => img.product_id === product.id)
-              .map((img) => img.url) || [];
-
-          const publicImageUrls = productImagePaths.map(
-            (path) =>
-              supabase.storage.from("product-images").getPublicUrl(path).data
-                .publicUrl
-          );
-
-          return { ...product, images: publicImageUrls };
-        });
+        // Attach images to each product
+        const productsWithImages = await Promise.all(
+          queryResult.map(async (product) => {
+            const images = await getPublicImageUrls(product.id);
+            return { ...product, images };
+          })
+        );
 
         // Apply filters
         let result = productsWithImages.filter((product) => {

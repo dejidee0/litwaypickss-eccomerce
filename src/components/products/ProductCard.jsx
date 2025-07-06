@@ -15,7 +15,13 @@ export default function ProductCard({ product }) {
   useEffect(() => {
     async function fetchData() {
       try {
-        if (Array.isArray(product.images)) {
+        // If product.images contains public URLs already, use them
+        if (
+          Array.isArray(product.images) &&
+          product.images[0]?.startsWith("http")
+        ) {
+          setImageUrls(product.images);
+        } else if (Array.isArray(product.images)) {
           const urls = product.images.map(
             (path) =>
               supabase.storage.from("product-images").getPublicUrl(path).data
@@ -24,7 +30,7 @@ export default function ProductCard({ product }) {
           setImageUrls(urls);
         }
 
-        // Optionally fetch category name from slug
+        // Resolve category name if only slug is present
         if (product.category_slug && !product.category) {
           const { data } = await supabase
             .from("categories")
