@@ -52,7 +52,7 @@ export default function AboutPage() {
       name: 'Moses J. Lamah',
       role: 'Founder & CEO',
     
-      description: Moses J. Lamah is a forward-thinking digital marketer and the founder of LITWAPICKS, currently pursuing a degree in Computer Science at Marwadi University in India, and a certificate in Database Management System from INFOSYS, with over five years of hands-on experience in digital strategy, he has worked and collaborated with some of Liberia’s most recognized/ high profiled companies including ORANGE Liberia, Lonestar Mobile Money, E-Wallie, TipMe, and The Gathering Group Worldwide and serve as an IT consultant at the National Public Health Institute of Liberia ( NPHIL ) from 2022-2024. 
+      description: 'Moses J. Lamah is a forward-thinking digital marketer and the founder of LITWAPICKS, currently pursuing a degree in Computer Science at Marwadi University in India, and a certificate in Database Management System from INFOSYS, with over five years of hands-on experience in digital strategy, he has worked and collaborated with some of Liberia’s most recognized/ high profiled companies including ORANGE Liberia, Lonestar Mobile Money, E-Wallie, TipMe, and The Gathering Group Worldwide and serve as an IT consultant at the National Public Health Institute of Liberia ( NPHIL ) from 2022-2024. 
 
 Combining technical expertise with a creative marketing mindset, Moses is passionate about leveraging technology to solve everyday problems and create seamless digital experiences. His leadership at LITWAPICKS is grounded in innovation, adaptability, and a strong belief in building customer-first solutions.
 
