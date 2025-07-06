@@ -41,8 +41,6 @@ export default function Header() {
   const { loyaltyData } = useLoyalty();
   const navigate = useNavigate();
 
-  const hasLoyaltyDiscount = loyaltyData?.canUseDiscount;
-
   useEffect(() => {
     if (searchQuery.trim().length > 1) {
       setSearchSuggestions(getSearchSuggestions(searchQuery, 8));
@@ -109,153 +107,229 @@ export default function Header() {
       </div>
 
       {/* Main Header */}
-      <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        {/* Logo */}
-        <div className="flex justify-between ">
+      <div className="container mx-auto px-4 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        {/* Mobile Top Row: Logo + Icons */}
+        <div className="flex items-center justify-between md:hidden">
           <Link to="/" className="text-2xl font-bold text-primary-600">
             LitwayPicks
           </Link>
-          <Link
-            to="/contact"
-            className="text-gray-700 pt-2 flex md:hidden hover:text-primary-600"
-          >
-            Contact
-          </Link>
-        </div>
-
-        {/* Search */}
-        <div className="relative w-full max-w-lg mx-auto">
-          <form onSubmit={handleSearch}>
-            <div className="relative">
-              <input
-                type="search"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={handleSearchFocus}
-                onBlur={() =>
-                  setTimeout(() => setShowSearchSuggestions(false), 200)
-                }
-                className="input pr-10 w-full"
-              />
-              <button
-                type="submit"
-                className="absolute right-1 top-1 h-8 w-8 flex items-center justify-center bg-primary-600 text-white rounded"
-              >
-                <Search className="h-4 w-4" />
-              </button>
-            </div>
-          </form>
-          {showSearchSuggestions && (
-            <div className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow z-50 max-h-60 overflow-y-auto">
-              <div className="p-2">
-                {searchQuery.trim().length <= 1 && (
-                  <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">
-                    Popular Searches
-                  </div>
-                )}
-                {searchSuggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSuggestionClick(s)}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <Search className="h-4 w-4 text-gray-400" />
-                    <span>{s}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* User Actions */}
-        <div className="flex items-center gap-4">
-          {isAuthenticated ? (
-            <div className="relative">
+          <div className="flex items-center gap-4">
+            <Link
+              to="/contact"
+              className="text-gray-700 hover:text-primary-600"
+            >
+              <MapPin className="h-5 w-5" />
+            </Link>
+            <button
+              onClick={() => setIsOpen(true)}
+              className="relative text-gray-700 hover:text-primary-600"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {itemsCount > 0 && (
+                <span className="absolute -top-2 -right-2 h-5 w-5 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
+                  {itemsCount}
+                </span>
+              )}
+            </button>
+            {isAuthenticated ? (
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 text-gray-700 hover:text-primary-600"
+                className="text-gray-700 hover:text-primary-600"
               >
-                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-primary-600 text-sm font-medium">
-                    {user?.first_name?.[0]?.toUpperCase()}
-                  </span>
-                </div>
-                <span>Hi, {user?.first_name}</span>
+                <User className="h-5 w-5" />
               </button>
+            ) : (
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="text-gray-700 hover:text-primary-600"
+              >
+                <User className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        </div>
 
-              {showUserMenu && (
-                <div className="absolute right-0 top-full mt-2 w-72 bg-white border rounded shadow-lg z-50">
-                  {loyaltyData && (
-                    <div className="border-b px-4 py-2">
-                      <LoyaltyCard compact />
+        {/* Desktop Row */}
+        <div className="hidden md:flex md:items-center md:justify-between w-full">
+          <Link to="/" className="text-2xl font-bold text-primary-600">
+            LitwayPicks
+          </Link>
+          <div className="relative w-full max-w-lg mx-4">
+            <form onSubmit={handleSearch}>
+              <div className="relative">
+                <input
+                  type="search"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={handleSearchFocus}
+                  onBlur={() =>
+                    setTimeout(() => setShowSearchSuggestions(false), 200)
+                  }
+                  className="input pr-10 w-full"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-1 top-1 h-8 w-8 flex items-center justify-center bg-primary-600 text-white rounded"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+              </div>
+            </form>
+            {showSearchSuggestions && (
+              <div className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow z-50 max-h-60 overflow-y-auto">
+                <div className="p-2">
+                  {searchQuery.trim().length <= 1 && (
+                    <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">
+                      Popular Searches
                     </div>
                   )}
-                  <Link
-                    to="/account"
-                    onClick={() => setShowUserMenu(false)}
-                    className="block px-4 py-2 hover:bg-gray-50"
-                  >
-                    My Account
-                  </Link>
-                  <Link
-                    to="/wishlist"
-                    onClick={() => setShowUserMenu(false)}
-                    className="block px-4 py-2 hover:bg-gray-50"
-                  >
-                    Wishlist
-                  </Link>
-                  {isAdmin && (
+                  {searchSuggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSuggestionClick(s)}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <Search className="h-4 w-4 text-gray-400" />
+                      <span>{s}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            {isAuthenticated ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-2 text-gray-700 hover:text-primary-600"
+                >
+                  <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                    <span className="text-primary-600 text-sm font-medium">
+                      {user?.first_name?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                  <span>Hi, {user?.first_name}</span>
+                </button>
+                {showUserMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-white border rounded shadow-lg z-50">
+                    {loyaltyData && (
+                      <div className="border-b px-4 py-2">
+                        <LoyaltyCard compact />
+                      </div>
+                    )}
                     <Link
-                      to="/admin"
+                      to="/account"
                       onClick={() => setShowUserMenu(false)}
                       className="block px-4 py-2 hover:bg-gray-50"
                     >
-                      Admin Panel
+                      My Account
                     </Link>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowLoginModal(true)}
-              className="text-gray-700 hover:text-primary-600"
-            >
-              <User className="h-5 w-5" />
-            </button>
-          )}
-
-          <Link
-            to="/wishlist"
-            className="text-gray-700 hover:text-primary-600 hidden sm:inline"
-          >
-            <Heart className="h-5 w-5" />
-          </Link>
-
-          <button
-            onClick={() => setIsOpen(true)}
-            className="relative text-gray-700 hover:text-primary-600"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {itemsCount > 0 && (
-              <span className="absolute -top-2 -right-2 h-5 w-5 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
-                {itemsCount}
-              </span>
+                    <Link
+                      to="/wishlist"
+                      onClick={() => setShowUserMenu(false)}
+                      className="block px-4 py-2 hover:bg-gray-50"
+                    >
+                      Wishlist
+                    </Link>
+                    {isAdmin && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setShowUserMenu(false)}
+                        className="block px-4 py-2 hover:bg-gray-50"
+                      >
+                        Admin Panel
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="text-gray-700 hover:text-primary-600"
+              >
+                <User className="h-5 w-5" />
+              </button>
             )}
-          </button>
+            <Link
+              to="/wishlist"
+              className="text-gray-700 hover:text-primary-600 hidden sm:inline"
+            >
+              <Heart className="h-5 w-5" />
+            </Link>
+            <button
+              onClick={() => setIsOpen(true)}
+              className="relative text-gray-700 hover:text-primary-600"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {itemsCount > 0 && (
+                <span className="absolute -top-2 -right-2 h-5 w-5 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
+                  {itemsCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Search */}
+        <div className="md:hidden">
+          <div className="relative w-full">
+            <form onSubmit={handleSearch}>
+              <div className="relative">
+                <input
+                  type="search"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={handleSearchFocus}
+                  onBlur={() =>
+                    setTimeout(() => setShowSearchSuggestions(false), 200)
+                  }
+                  className="input pr-10 w-full"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-1 top-1 h-8 w-8 flex items-center justify-center bg-primary-600 text-white rounded"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+              </div>
+            </form>
+            {showSearchSuggestions && (
+              <div className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow z-50 max-h-60 overflow-y-auto">
+                <div className="p-2">
+                  {searchQuery.trim().length <= 1 && (
+                    <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">
+                      Popular Searches
+                    </div>
+                  )}
+                  {searchSuggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSuggestionClick(s)}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <Search className="h-4 w-4 text-gray-400" />
+                      <span>{s}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Always-visible Nav Links */}
-      <nav className="border-t  overflow-x-auto scrollbar-hide bg-white">
+      <nav className="border-t overflow-x-auto scrollbar-hide bg-white">
         <div className="flex items-center space-x-6 px-4 py-3 text-sm font-medium whitespace-nowrap">
           <Link to="/" className="text-gray-700 hover:text-primary-600">
             Home
