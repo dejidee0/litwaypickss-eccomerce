@@ -123,7 +123,7 @@ export default function Header() {
             >
               <ShoppingCart className="h-7 w-7 md:h-8 md:w-8" />
             </motion.div>
-            <div className="flex flex-col md:flex-row md:items-center md:space-x-2">
+            <div className="flex md:items-center md:space-x-2">
               <motion.span
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
