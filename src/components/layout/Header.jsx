@@ -337,6 +337,7 @@ export default function Header() {
           <Link to="/shop" className="text-gray-700 hover:text-primary-600">
             Shop
           </Link>
+
           {categories.map((cat) => (
             <Link
               key={cat.href}
@@ -346,6 +347,12 @@ export default function Header() {
               {cat.name}
             </Link>
           ))}
+          <Link to="/about" className="text-gray-700 hover:text-primary-600">
+            About
+          </Link>
+          <Link to="/contact" className="text-gray-700 hover:text-primary-600">
+            Contact
+          </Link>
         </div>
       </nav>
 
