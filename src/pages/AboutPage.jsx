@@ -49,23 +49,12 @@ export default function AboutPage() {
 
   const team = [
     {
-      name: 'John Doe',
+      name: 'Moses J. Lamah',
       role: 'Founder & CEO',
-      image: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
+    
       description: 'Passionate about bringing quality products to every Liberian home.',
     },
-    {
-      name: 'Sarah Johnson',
-      role: 'Head of Operations',
-      image: 'https://images.pexels.com/photos/794064/pexels-photo-794064.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      description: 'Ensures smooth operations and timely deliveries nationwide.',
-    },
-    {
-      name: 'Michael Brown',
-      role: 'Customer Experience Manager',
-      image: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      description: 'Dedicated to providing exceptional customer service and support.',
-    },
+    
   ]
 
   return (
@@ -91,17 +80,17 @@ export default function AboutPage() {
           <h2 className="text-3xl font-bold text-gray-900">Our Story</h2>
           <div className="space-y-4 text-gray-700 leading-relaxed">
             <p>
-              Founded in 2024, LitwayPicks was born from a simple vision: to make quality products 
+              Founded in 2024, LitwayPicks born from a simple vision: to make quality products 
               accessible to every Liberian, regardless of where they live. We recognized that many 
               people in Liberia faced challenges accessing diverse, high-quality products at fair prices.
             </p>
             <p>
-              Starting as a small team with big dreams, we've grown to become Liberia's most trusted 
+              Starting as a small team with big dreams, we are growing to become Liberia's most trusted first ever
               e-commerce platform. Our commitment to excellence, customer satisfaction, and community 
               development has made us the go-to destination for online shopping in Liberia.
             </p>
             <p>
-              Today, we serve customers in all 15 counties of Liberia, offering free nationwide 
+              Today, we serve customers in Liberia, offering free nationwide 
               delivery and supporting local businesses while bringing international brands to our 
               beautiful country.
             </p>
@@ -168,33 +157,30 @@ export default function AboutPage() {
       </div>
 
       {/* Team */}
-      <div className="mb-16">
-        <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-          Meet Our Team
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {team.map((member, index) => (
-            <div key={index} className="card-elevated p-6 text-center hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
-              <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-lg">
-                <img
-                  src={member.image}
-                  alt={member.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                {member.name}
-              </h3>
-              <p className="text-primary-600 font-medium mb-3">
-                {member.role}
-              </p>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                {member.description}
-              </p>
-            </div>
-          ))}
+<div className="mb-16">
+  <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
+     The Founder
+  </h2>
+  <div className="flex justify-center">
+    {team.map((member, index) => (
+      <div key={index} className="card-elevated p-6 text-center hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 max-w-sm">
+        <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-lg">
+          
         </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-1">
+          {member.name}
+        </h3>
+        <p className="text-primary-600 font-medium mb-3">
+          {member.role}
+        </p>
+        <p className="text-gray-600 text-sm leading-relaxed">
+          {member.description}
+        </p>
       </div>
+    ))}
+  </div>
+</div>
+
 
       {/* Stats */}
       <div className="card-elevated bg-gradient-to-br from-primary-600 via-primary-700 to-orange-600 text-white p-8 mb-16 shadow-2xl">
