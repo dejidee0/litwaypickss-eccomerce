@@ -49,23 +49,12 @@ export default function AboutPage() {
 
   const team = [
     {
-      name: 'John Doe',
+      name: 'Moses J. Lamah',
       role: 'Founder & CEO',
-      image: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
+    
       description: 'Passionate about bringing quality products to every Liberian home.',
     },
-    {
-      name: 'Sarah Johnson',
-      role: 'Head of Operations',
-      image: 'https://images.pexels.com/photos/794064/pexels-photo-794064.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      description: 'Ensures smooth operations and timely deliveries nationwide.',
-    },
-    {
-      name: 'Michael Brown',
-      role: 'Customer Experience Manager',
-      image: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      description: 'Dedicated to providing exceptional customer service and support.',
-    },
+    
   ]
 
   return (
@@ -91,17 +80,17 @@ export default function AboutPage() {
           <h2 className="text-3xl font-bold text-gray-900">Our Story</h2>
           <div className="space-y-4 text-gray-700 leading-relaxed">
             <p>
-              Founded in 2024, LitwayPicks was born from a simple vision: to make quality products 
+              Founded in 2024, LitwayPicks born from a simple vision: to make quality products 
               accessible to every Liberian, regardless of where they live. We recognized that many 
               people in Liberia faced challenges accessing diverse, high-quality products at fair prices.
             </p>
             <p>
-              Starting as a small team with big dreams, we've grown to become Liberia's most trusted 
+              Starting as a small team with big dreams, we are growing to become Liberia's most trusted first ever
               e-commerce platform. Our commitment to excellence, customer satisfaction, and community 
               development has made us the go-to destination for online shopping in Liberia.
             </p>
             <p>
-              Today, we serve customers in all 15 counties of Liberia, offering free nationwide 
+              Today, we serve customers in Liberia, offering free nationwide 
               delivery and supporting local businesses while bringing international brands to our 
               beautiful country.
             </p>
