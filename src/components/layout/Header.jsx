@@ -113,7 +113,7 @@ export default function Header() {
         <div className="flex items-center justify-between md:hidden">
           <Link
             to="/"
-            className="flex flex-col items-start md:flex-row md:items-center gap-1 group"
+            className="flex items-start  md:items-center gap-1 group"
           >
             <motion.div
               initial={{ rotate: 0 }}
