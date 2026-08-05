@@ -26,19 +26,14 @@ export function useDashboardStats() {
   const { data: orderStats, isLoading: statsLoading } = useQuery({
     queryKey: ["admin-order-stats"],
     queryFn: async () => {
-      const [totalRes, pendingRes, revenueRes] = await Promise.all([
-        supabase.from("orders").select("id", { count: "exact", head: true }),
-        supabase.from("orders").select("id", { count: "exact", head: true }).eq("payment_status", "PENDING"),
-        supabase.from("orders").select("final_total").eq("payment_status", "COMPLETED"),
-      ]);
-      const totalRevenue = (revenueRes.data ?? []).reduce(
-        (sum, o) => sum + Number(o.final_total ?? 0),
-        0,
-      );
+      // Single RPC call — aggregation done in Postgres, not in the browser.
+      // Previously this fetched every final_total row and summed in JS.
+      const { data, error } = await supabase.rpc("get_order_stats");
+      if (error) throw error;
       return {
-        totalOrders: totalRes.count ?? 0,
-        pendingOrders: pendingRes.count ?? 0,
-        totalRevenue,
+        totalOrders: data?.total_orders ?? 0,
+        pendingOrders: data?.pending_orders ?? 0,
+        totalRevenue: Number(data?.total_revenue ?? 0),
       };
     },
     staleTime: 60_000,
@@ -62,7 +57,7 @@ export function useDashboardStats() {
   const revenueByDay = useMemo(() => {
     const byDay = {};
     recentOrders
-      .filter((o) => o.payment_status === "COMPLETED")
+      .filter((o) => o.payment_status === "COMPLETED" || o.payment_status === "SUCCESSFUL")
       .forEach((o) => {
         const day = o.created_at.split("T")[0];
         byDay[day] = (byDay[day] || 0) + Number(o.final_total);

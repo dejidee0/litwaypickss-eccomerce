@@ -441,6 +441,10 @@ function CheckoutContent() {
 
       setOrderId(data.orderId);
       setReferenceId(data.referenceId);
+      // Flip to the pending panel in the same commit that clears `loading`,
+      // so the form can't reappear enabled for a frame between the two.
+      setPaymentStatus("pending");
+      setLoading(false); // submission complete — polling takes over
       toast.success("Payment request sent to your phone", {
         icon: <Smartphone className="h-5 w-5" />,
       });

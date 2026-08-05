@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Search, Loader2, Eye } from "lucide-react";
 import { useOrders, ORDERS_PAGE_SIZE } from "@/hooks/useOrders";
 import { formatCurrency } from "@/lib/currency";
@@ -8,17 +9,20 @@ import OrderDetailPanel from "@/components/Admin/Orders/OrderDetailPanel";
 
 // SUCCESSFUL = MoMo payment confirmed, awaiting fulfilment
 // COMPLETED  = order fulfilled/delivered by admin
-const STATUSES = ["", "PENDING", "SUCCESSFUL", "COMPLETED", "FAILED", "REFUNDED"];
-const STATUS_LABELS = { "": "All", PENDING: "Pending", SUCCESSFUL: "Paid", COMPLETED: "Completed", FAILED: "Failed", REFUNDED: "Refunded" };
+const STATUSES = ["", "PENDING", "SUCCESSFUL", "COMPLETED", "FAILED", "REFUNDED", "DISPUTED"];
+const STATUS_LABELS = { "": "All", PENDING: "Pending", SUCCESSFUL: "Paid", COMPLETED: "Completed", FAILED: "Failed", REFUNDED: "Refunded", DISPUTED: "Disputed" };
 const STATUS_STYLES = {
   SUCCESSFUL: "bg-blue-100 text-blue-700",
   COMPLETED: "bg-green-100 text-green-700",
   PENDING: "bg-orange-100 text-orange-700",
   FAILED: "bg-red-100 text-red-700",
   REFUNDED: "bg-purple-100 text-purple-700",
+  DISPUTED: "bg-yellow-100 text-yellow-700",
 };
 
 export default function OrdersPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [status, setStatus] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -33,6 +37,28 @@ export default function OrdersPage() {
   const { orders, totalCount, pageCount, isLoading, isFetching, updateStatus } = useOrders({
     status, search: debouncedSearch, page,
   });
+
+  // Auto-open detail panel when navigating from a notification link.
+  // Strip the ?order= param immediately after opening so revisiting the page
+  // doesn't re-open the panel.
+  const targetOrderId = searchParams.get("order");
+  useEffect(() => {
+    if (!targetOrderId) return;
+
+    const open = (order) => {
+      setSelectedOrder(order);
+      router.replace("/admin/orders", { scroll: false });
+    };
+
+    const match = orders.find((o) => o.id === targetOrderId);
+    if (match) { open(match); return; }
+
+    if (isLoading) return;
+    import("@/lib/supabase").then(({ supabase }) => {
+      supabase.from("orders").select("*").eq("id", targetOrderId).maybeSingle()
+        .then(({ data }) => { if (data) open(data); else router.replace("/admin/orders", { scroll: false }); });
+    });
+  }, [targetOrderId, orders, isLoading]);
 
   return (
     <div className="space-y-5">
