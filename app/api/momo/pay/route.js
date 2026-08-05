@@ -16,7 +16,14 @@ export async function POST(request) {
       payerMessage,
       items,
       deliveryInfo,
+      userInfo,
     } = body;
+
+    // Contact name is display-only on the order; the identity that matters
+    // (user_id, email) still comes from the session. Prefer the saved profile
+    // and fall back to what was typed at checkout so orders aren't nameless.
+    const contactName = (value) =>
+      typeof value === "string" ? value.trim().slice(0, 100) : "";
 
     if (!phone) {
       return NextResponse.json(
@@ -131,8 +138,8 @@ export async function POST(request) {
         user_id: user.id,
         reference_id: null,
         external_id: processId,
-        customer_first_name: user.first_name || "",
-        customer_last_name: user.last_name || "",
+        customer_first_name: user.first_name || contactName(userInfo?.firstName),
+        customer_last_name: user.last_name || contactName(userInfo?.lastName),
         customer_email: user.email,
         customer_phone: formattedPhone,
         delivery_address: deliveryInfo.deliveryAddress,

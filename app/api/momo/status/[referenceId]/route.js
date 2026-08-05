@@ -3,8 +3,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getAccessToken, fetchTransactionDetails } from "@/lib/momo/service";
 import { sendOrderPlacedEmails, sendOrderFailedEmails } from "@/lib/email";
 import { notifyOrderPlaced, notifyOrderFailed } from "@/lib/notifications";
+import { requireUserApi } from "@/lib/api-auth";
 
 export async function GET(request, { params }) {
+  const { user, response: authResponse } = await requireUserApi();
+  if (authResponse) return authResponse;
+
   const { referenceId } = await params;
 
   try {
@@ -17,15 +21,41 @@ export async function GET(request, { params }) {
       .eq("reference_id", referenceId)
       .single();
 
+    // Only the owning customer (or an admin) may poll an order's status.
+    // A reference ID is not a capability token — without this, anyone holding
+    // one could read the order and drive its side effects.
+    if (!dbError && order) {
+      const isOwner =
+        (order.user_id && order.user_id === user.id) ||
+        (!order.user_id &&
+          order.customer_email &&
+          order.customer_email.toLowerCase() === (user.email || "").toLowerCase());
+      if (!isOwner && user.role !== "admin") {
+        return NextResponse.json(
+          { success: false, message: "Forbidden" },
+          { status: 403 },
+        );
+      }
+    }
+
     // Terminal statuses already in DB — no need to re-query MoMo
     const TERMINAL_DB_STATUSES = ["SUCCESSFUL", "FAILED", "COMPLETED", "REFUNDED", "DISPUTED"];
     if (!dbError && order && TERMINAL_DB_STATUSES.includes(order.payment_status)) {
       return NextResponse.json({
         success: true,
         status: order.payment_status,
-        orderDetails: order,
         source: "database",
       });
+    }
+
+    // Every payment goes through /api/momo/pay, which writes the order row
+    // before initiating. No row means the reference ID isn't ours — don't
+    // relay MoMo transaction data for it.
+    if (dbError || !order) {
+      return NextResponse.json(
+        { success: false, message: "Transaction not found" },
+        { status: 404 },
+      );
     }
 
     // 2. Check live with MoMo API
@@ -130,7 +160,6 @@ export async function GET(request, { params }) {
     return NextResponse.json({
       success: true,
       status,
-      data: transaction,
       source: "momo_api",
     });
   } catch (error) {

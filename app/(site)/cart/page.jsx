@@ -40,7 +40,7 @@ export default function CartPage() {
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <div key={item.id} className="card p-6">
+            <div key={item.cartKey ?? item.id} className="card p-6">
               <div className="flex space-x-4">
                 <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                   <img
@@ -58,9 +58,16 @@ export default function CartPage() {
                     <div>
                       <h3 className="font-semibold text-gray-900">{item.name}</h3>
                       <p className="text-sm text-gray-600">{item.brand}</p>
+                      {(item.selectedSize || item.selectedColor) && (
+                        <p className="text-sm text-gray-500">
+                          {[item.selectedSize, item.selectedColor]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      )}
                     </div>
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item.cartKey ?? item.id)}
                       className="text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <Trash2 className="h-5 w-5" />
@@ -70,7 +77,9 @@ export default function CartPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() =>
+                          updateQuantity(item.cartKey ?? item.id, item.quantity - 1)
+                        }
                         disabled={item.quantity <= 1}
                         className="btn btn-outline w-8 h-8 p-0 disabled:opacity-50"
                       >
@@ -80,7 +89,9 @@ export default function CartPage() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() =>
+                          updateQuantity(item.cartKey ?? item.id, item.quantity + 1)
+                        }
                         disabled={item.quantity >= item.stock}
                         className="btn btn-outline w-8 h-8 p-0 disabled:opacity-50"
                       >
