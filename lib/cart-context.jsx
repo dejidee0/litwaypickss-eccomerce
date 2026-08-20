@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { supabase } from './supabase'
+import { buildCartItem, makeCartKey, normalizeCartItems } from './cart-contract'
 
 const CartContext = createContext()
 
@@ -24,7 +25,7 @@ export function CartProvider({ children }) {
       .select('items')
       .eq('user_id', uid)
       .single()
-    return data?.items ?? null
+    return data?.items ? normalizeCartItems(data.items) : null
   }
 
   const saveToSupabase = async (uid, cartItems) => {
@@ -42,7 +43,7 @@ export function CartProvider({ children }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) setItems(JSON.parse(saved))
+      if (saved) setItems(normalizeCartItems(JSON.parse(saved)))
     } catch { /* corrupted — start empty */ }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -79,7 +80,7 @@ export function CartProvider({ children }) {
   // Variants (size, color) create distinct cart entries via a composite cartKey.
   const addItem = (product, qty = 1, variant = {}) => {
     const { size = null, color = null } = variant
-    const cartKey = [product.id, size, color].filter(Boolean).join('::') || product.id
+    const cartKey = makeCartKey(product.id, size, color)
 
     setItems(current => {
       const existing = current.find(item => item.cartKey === cartKey)
@@ -98,7 +99,7 @@ export function CartProvider({ children }) {
 
       const actualQty = Math.min(qty, product.stock)
       toast.success('Item added to cart')
-      return [...current, { ...product, cartKey, selectedSize: size, selectedColor: color, quantity: actualQty }]
+      return [...current, buildCartItem(product, { size, color, quantity: actualQty })]
     })
   }
 
